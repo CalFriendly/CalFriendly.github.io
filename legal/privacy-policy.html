@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Privacy Policy — Cal Friendly</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0D0D0D; color: #E5E5E5; line-height: 1.7; padding: 0 16px; }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 48px 0 80px; }
+  .logo { display: flex; align-items: center; gap: 10px; margin-bottom: 40px; }
+  .logo-icon { width: 36px; height: 36px; background: #FACC15; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+  .logo-name { font-size: 18px; font-weight: 800; color: #FACC15; letter-spacing: 0.3px; }
+  h1 { font-size: 28px; font-weight: 800; color: #FFFFFF; margin-bottom: 6px; }
+  .meta { font-size: 13px; color: #888; margin-bottom: 40px; }
+  .summary-box { background: #1A1A1A; border: 1px solid #2A2A2A; border-left: 3px solid #FACC15; border-radius: 12px; padding: 18px 20px; margin-bottom: 36px; }
+  .summary-box strong { color: #FACC15; display: block; margin-bottom: 6px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .summary-box p { font-size: 14px; color: #CCCCCC; line-height: 1.6; }
+  h2 { font-size: 16px; font-weight: 700; color: #FACC15; text-transform: uppercase; letter-spacing: 0.6px; margin: 36px 0 12px; border-bottom: 1px solid #2A2A2A; padding-bottom: 8px; }
+  h3 { font-size: 15px; font-weight: 700; color: #FFFFFF; margin: 20px 0 8px; }
+  p { font-size: 15px; color: #CCCCCC; margin-bottom: 12px; }
+  ul { padding-left: 20px; margin-bottom: 12px; }
+  li { font-size: 15px; color: #CCCCCC; margin-bottom: 6px; }
+  table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+  th { font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: #888; font-weight: 700; text-align: left; padding: 10px 12px; border-bottom: 1px solid #2A2A2A; }
+  td { font-size: 14px; color: #CCCCCC; padding: 10px 12px; border-bottom: 1px solid #1A1A1A; vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  .footer { margin-top: 60px; padding-top: 24px; border-top: 1px solid #2A2A2A; font-size: 12px; color: #555; text-align: center; }
+  .nav-link { color: #FACC15; text-decoration: none; font-size: 13px; }
+  .nav-link:hover { text-decoration: underline; }
+  strong { color: #FFFFFF; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="logo">
+    <div class="logo-icon">🥗</div>
+    <span class="logo-name">Cal Friendly</span>
+  </div>
+
+  <h1>Privacy Policy</h1>
+  <p class="meta">CalFriendly LLC &nbsp;·&nbsp; Effective: May 13, 2026 &nbsp;·&nbsp; Last Updated: May 13, 2026</p>
+
+  <div class="summary-box">
+    <strong>Short Version</strong>
+    <p>Almost all of your data stays on your device. The only things transmitted off your device are food photos (for AI scanning) and food search queries (to fetch nutrition data). We do not sell your data. We do not have a backend database storing your personal health information.</p>
+  </div>
+
+  <h2>1. Introduction</h2>
+  <p>CalFriendly LLC ("Company," "we," "us," or "our") operates the CalFriendly mobile application ("Application"). This Privacy Policy explains how we collect, use, store, and share information when you use our Application.</p>
+  <p>By using the Application, you agree to the practices described in this Privacy Policy.</p>
+
+  <h2>2. Information We Collect</h2>
+  <h3>2.1 Information You Provide During Onboarding</h3>
+  <p>When you set up the Application, you provide:</p>
+  <ul>
+    <li><strong>Name</strong> (display purposes only)</li>
+    <li><strong>Date of birth / age range</strong></li>
+    <li><strong>Weight and height</strong> (used to calculate calorie targets via Mifflin-St Jeor formula)</li>
+    <li><strong>Biological sex</strong> (used in TDEE calculation)</li>
+    <li><strong>Activity level</strong> (sedentary, lightly active, active, very active)</li>
+    <li><strong>Dietary goal</strong> (lose weight, maintain, gain muscle)</li>
+    <li><strong>Diabetic status</strong> (yes/no — used to enable sugar alert features)</li>
+  </ul>
+  <p>All onboarding data is stored <strong>locally on your device</strong> in encrypted storage (AsyncStorage). We do not transmit this data to our servers.</p>
+
+  <h3>2.2 Meal Logs and Nutrition Data</h3>
+  <ul>
+    <li>Food items you log manually or accept from scan results</li>
+    <li>Macronutrient values (calories, protein, carbs, fat, sugar, sodium)</li>
+    <li>Meal timestamps and meal type</li>
+    <li>Supplement tracking entries and dose preferences</li>
+  </ul>
+  <p>All meal log data is stored <strong>locally on your device</strong>. We do not sync, back up, or transmit your meal history to our servers.</p>
+
+  <h3>2.3 Food Photos (AI Scanning Feature)</h3>
+  <p>When you photograph food for AI analysis, the photo is transmitted over HTTPS to <strong>Anthropic, Inc.</strong> (our AI provider) for the purpose of generating a nutritional estimate. The photo is not stored or retained by CalFriendly LLC beyond displaying the scan result. Anthropic's handling of data submitted to their API is governed by Anthropic's own privacy policy.</p>
+
+  <h3>2.4 Food Search Queries</h3>
+  <p>When you type a food name in the search bar, the search text is transmitted to <strong>USDA FoodData Central</strong> (a U.S. government public database). If you scan a barcode, the UPC code is transmitted to <strong>Open Food Facts</strong> (an open-source public database). These queries do not include your name, account information, health status, or any personally identifying information.</p>
+
+  <h3>2.5 Subscription Status</h3>
+  <p>Your subscription status (free or Pro) is stored locally on your device. If you subscribe through the Apple App Store or Google Play, payment information is handled entirely by Apple or Google. We never receive, see, or store your credit card or payment details.</p>
+
+  <h3>2.6 App Diagnostics (Expo SDK)</h3>
+  <p>The Application is built with Expo, which may collect anonymous device diagnostic information (device type, OS version, crash reports) to support app stability. This data is anonymized and not linked to your identity.</p>
+
+  <h2>3. How We Use Your Information</h2>
+  <table>
+    <tr><th>Data</th><th>Purpose</th></tr>
+    <tr><td>Onboarding (name, weight, height, goal)</td><td>Calculate personalized calorie targets; display in profile</td></tr>
+    <tr><td>Diabetic status</td><td>Enable/disable sugar alert features</td></tr>
+    <tr><td>Meal logs</td><td>Display daily macro progress; show weekly/monthly trends</td></tr>
+    <tr><td>Food photos</td><td>Generate AI nutritional estimates via Anthropic</td></tr>
+    <tr><td>Food search queries</td><td>Fetch nutrition data from USDA / Open Food Facts</td></tr>
+    <tr><td>Subscription status</td><td>Enable or restrict premium features</td></tr>
+  </table>
+  <p>We do not use your information for advertising, marketing, or profiling.</p>
+
+  <h2>4. Data Storage</h2>
+  <p><strong>All personal health data is stored locally on your device using AsyncStorage.</strong> This means:</p>
+  <ul>
+    <li>Your data does not leave your device except as described in Section 2.</li>
+    <li>CalFriendly LLC does not operate a server or database that stores your personal health information.</li>
+    <li>If you delete the Application, all locally stored data is permanently deleted.</li>
+  </ul>
+
+  <h2>5. Third-Party Services</h2>
+  <table>
+    <tr><th>Service</th><th>Data Shared</th><th>Why</th></tr>
+    <tr><td>Anthropic, Inc.</td><td>Food photos during AI scan</td><td>AI nutritional analysis</td></tr>
+    <tr><td>USDA FoodData Central</td><td>Food search text</td><td>Retrieve nutritional data</td></tr>
+    <tr><td>Open Food Facts</td><td>Product barcode (UPC)</td><td>Packaged food nutrition</td></tr>
+    <tr><td>Apple App Store</td><td>Payment info (handled entirely by Apple)</td><td>Subscription billing</td></tr>
+    <tr><td>Google Play Store</td><td>Payment info (handled entirely by Google)</td><td>Subscription billing</td></tr>
+    <tr><td>Expo</td><td>Anonymous device diagnostics</td><td>App stability</td></tr>
+  </table>
+
+  <h2>6. What We Do NOT Do</h2>
+  <ul>
+    <li>We do not <strong>sell your personal data</strong> to any third party.</li>
+    <li>We do not <strong>share your health information</strong> with advertisers, data brokers, or third parties.</li>
+    <li>We do not <strong>build advertising profiles</strong> based on your food habits or health data.</li>
+    <li>We do not <strong>store your food photos</strong> — transmitted for AI analysis only, not retained.</li>
+    <li>We do not <strong>share payment information</strong> — billing is managed entirely by Apple or Google.</li>
+  </ul>
+
+  <h2>7. Data Security</h2>
+  <p>All network requests are transmitted over HTTPS. Data stored locally on your device is protected by your device's built-in security (passcode, biometrics). We do not operate a server that stores your health data, which eliminates the risk of a centralized data breach.</p>
+
+  <h2>8. Children's Privacy</h2>
+  <p>The Application is intended for users 18 years of age and older. We do not knowingly collect personal information from individuals under 13. If you believe a minor has used the Application, contact us immediately.</p>
+
+  <h2>9. Your Rights and Choices</h2>
+  <h3>Access and Review</h3>
+  <p>All data collected during onboarding and meal logging is accessible directly within the Application (Profile tab and daily log view).</p>
+  <h3>Deletion</h3>
+  <p>To delete all data, uninstall the Application. All locally stored data is permanently deleted. You can also update your onboarding data (weight, goal, name) at any time in the Profile tab.</p>
+
+  <h2>10. California Privacy Rights (CCPA)</h2>
+  <p>If you are a California resident, you have rights under the California Consumer Privacy Act including the right to know, the right to delete, and the right to opt out of the sale of your data. We do not sell personal data — no opt-out required. To exercise your rights, contact us at the address in Section 13.</p>
+
+  <h2>11. Canadian Privacy Rights (PIPEDA)</h2>
+  <p>If you are a Canadian resident, your personal information is handled in accordance with PIPEDA and applicable provincial privacy legislation. You have the right to access, correct, or request deletion of personal information. Given that all personal health data is stored locally on your device, access and deletion can be performed directly through the Application or by uninstalling it.</p>
+
+  <h2>12. Changes to This Policy</h2>
+  <p>We may update this Privacy Policy at any time. When material changes are made, we will notify you via in-app notice or email at least 14 days before the changes take effect.</p>
+
+  <h2>13. Contact</h2>
+  <p>For privacy questions, data requests, or to exercise your rights:</p>
+  <p><strong>CalFriendly LLC</strong><br>
+  Email: calfriendly.app@hotmail.com<br>
+  Mailing Address: 7101 Yarish Rd, Alger, MI 48610, United States<br>
+  Response time: within 3 business days.</p>
+
+  <div class="footer">
+    <p>© 2026 CalFriendly LLC &nbsp;·&nbsp; <a class="nav-link" href="terms.html">Terms of Service</a></p>
+  </div>
+</div>
+</body>
+</html>
