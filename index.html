@@ -1024,6 +1024,71 @@ footer { background:#060504; border-top:1px solid var(--border); position:relati
 .fb { display:flex; justify-content:space-between; align-items:center; padding-top:24px; border-top:1px solid #0E0D0C; font-size:11.5px; color:var(--text-ter); gap:14px; flex-wrap:wrap; }
 .legal-disc { font-size:10.5px; color:var(--text-ter); line-height:1.6; max-width:600px; margin-top:16px; }
 
+/* ── PAGE ENTRANCE (luxury brand cinematic fade) ── */
+#page-veil {
+  position: fixed;
+  inset: 0;
+  background: #060504;
+  z-index: 10000;
+  pointer-events: none;
+  transition: opacity 0.9s cubic-bezier(0.4, 0, 0.2, 1);
+}
+#page-veil.gone { opacity: 0; }
+
+/* ── CUSTOM CURSOR GLOW (desktop) ── */
+#cursor-glow {
+  position: fixed;
+  width: 320px;
+  height: 320px;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 1;
+  background: radial-gradient(circle, rgba(250,204,21,0.055) 0%, transparent 70%);
+  transform: translate(-50%, -50%);
+  transition: opacity 0.4s;
+  opacity: 0;
+}
+@media(hover: hover) {
+  body:hover #cursor-glow { opacity: 1; }
+}
+
+/* ── SECTION DECORATIVE NUMBERS ── */
+.sec-num {
+  position: absolute;
+  right: 48px;
+  top: 80px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 120px;
+  font-weight: 800;
+  color: rgba(250,204,21,0.028);
+  letter-spacing: -4px;
+  line-height: 1;
+  pointer-events: none;
+  user-select: none;
+  z-index: 0;
+}
+
+/* ── CARD METALLIC SHIMMER ── */
+.feat-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--r);
+  background: linear-gradient(
+    105deg,
+    transparent 35%,
+    rgba(255,255,255,0.045) 50%,
+    transparent 65%
+  );
+  background-size: 250% 100%;
+  background-position: 200% 0;
+  transition: background-position 0.7s ease;
+  pointer-events: none;
+}
+.feat-card:hover::after {
+  background-position: -50% 0;
+}
+
 /* ── GRADIENT ACCENT TEXT ── */
 h2 em, h1 em {
   font-style: normal;
@@ -1154,6 +1219,8 @@ h2 em, h1 em {
 </head>
 <body>
 
+<div id="page-veil"></div>
+<div id="cursor-glow" aria-hidden="true"></div>
 <div id="scroll-prog"></div>
 <canvas id="particles"></canvas>
 <div class="blob-wrap">
@@ -1307,7 +1374,8 @@ h2 em, h1 em {
 <div class="ydiv"></div>
 
 <!-- FEATURES -->
-<section id="features">
+<section id="features" style="position:relative">
+  <div class="sec-num" aria-hidden="true">01</div>
   <div class="si">
     <div class="reveal">
       <div class="stag">What makes us different</div>
@@ -1516,7 +1584,8 @@ h2 em, h1 em {
 <div class="ydiv"></div>
 
 <!-- HOW IT WORKS -->
-<section id="how" class="how-wrap">
+<section id="how" class="how-wrap" style="position:relative">
+  <div class="sec-num" aria-hidden="true">02</div>
   <div class="si">
     <div class="reveal" style="margin-bottom:60px">
       <div class="stag">Simple by design</div>
@@ -1583,7 +1652,8 @@ h2 em, h1 em {
 <div class="ydiv"></div>
 
 <!-- PRICING -->
-<section id="pricing" class="price-wrap">
+<section id="pricing" class="price-wrap" style="position:relative">
+  <div class="sec-num" aria-hidden="true">03</div>
   <div class="si">
     <div class="reveal" style="text-align:center;margin-bottom:60px">
       <div class="stag" style="text-align:center">Pricing</div>
@@ -2028,6 +2098,32 @@ window.addEventListener('scroll', () => {
   navEl.style.background = window.scrollY > 60
     ? 'rgba(16,15,13,0.92)' : 'rgba(16,15,13,0.72)';
 }, { passive: true });
+
+/* ── PAGE ENTRANCE VEIL ── */
+(function() {
+  const veil = document.getElementById('page-veil');
+  if (!veil) return;
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    veil.classList.add('gone');
+    setTimeout(() => veil.remove(), 1000);
+  }));
+})();
+
+/* ── CURSOR GLOW ── */
+(function() {
+  const glow = document.getElementById('cursor-glow');
+  if (!glow) return;
+  let mx = 0, my = 0, cx = 0, cy = 0;
+  document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; }, { passive: true });
+  function tick() {
+    cx += (mx - cx) * 0.1;
+    cy += (my - cy) * 0.1;
+    glow.style.left = cx + 'px';
+    glow.style.top = cy + 'px';
+    requestAnimationFrame(tick);
+  }
+  tick();
+})();
 
 /* ── TEXT SCRAMBLE on section labels ── */
 (function() {
