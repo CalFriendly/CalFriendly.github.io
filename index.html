@@ -1,4 +1,2081 @@
-﻿<!DOCTYPE html>
-<html><head><meta charset="utf-8"><title>CalFriendly</title>
-<meta http-equiv="refresh" content="0; url=legal/index.html">
-</head><body><a href="legal/index.html">CalFriendly Legal</a></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cal Friendly — Track Food. Flag What's Bad.</title>
+<meta name="description" content="The only food tracker with diabetic sugar alerts, bad ingredient detection, and supplement tracking. Privacy-first. $6.99/month.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+@property --rot { syntax:'<angle>'; initial-value:0deg; inherits:false; }
+
+:root {
+  --bg: #0D0D0D;
+  --bg-warm: #100F0D;
+  --surface: #171614;
+  --elevated: #1E1C1A;
+  --accent: #FACC15;
+  --accent-dim: rgba(250,204,21,0.08);
+  --accent-glow: rgba(250,204,21,0.18);
+  --text: #F2EFE8;
+  --text-sec: #7A7670;
+  --text-ter: #3D3B38;
+  --border: #242220;
+  --border-hi: #2E2C29;
+  --success: #22C55E;
+  --danger: #EF4444;
+  --warn: #F59E0B;
+  --r: 18px;
+  --ease-out: cubic-bezier(0.22,1,0.36,1);
+  --ease-spring: cubic-bezier(0.34,1.2,0.64,1);
+}
+
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+html { scroll-behavior:smooth; }
+body {
+  font-family:'Outfit',-apple-system,sans-serif;
+  background:var(--bg-warm);
+  color:var(--text);
+  overflow-x:hidden;
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ── NOISE OVERLAY ── */
+body::after {
+  content:'';
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:9000;
+  opacity:0.028;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size:200px 200px;
+}
+
+/* ── SCROLL PROGRESS ── */
+#scroll-prog {
+  position:fixed;
+  top:0; left:0;
+  height:2px;
+  width:0%;
+  background:var(--accent);
+  z-index:9999;
+  box-shadow:0 0 8px rgba(250,204,21,0.5);
+  transition:none;
+}
+
+/* ── CANVAS ── */
+canvas#particles {
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:0;
+}
+
+/* ── AMBIENT BLOBS ── */
+.blob-wrap {
+  position:fixed;
+  inset:0;
+  pointer-events:none;
+  z-index:0;
+  overflow:hidden;
+}
+.blob {
+  position:absolute;
+  border-radius:50%;
+  filter:blur(90px);
+  pointer-events:none;
+}
+.blob-a {
+  width:600px; height:600px;
+  top:-100px; left:-150px;
+  background:radial-gradient(circle, rgba(250,204,21,0.045) 0%, transparent 70%);
+  animation:ba 12s ease-in-out infinite;
+}
+.blob-b {
+  width:500px; height:500px;
+  top:40%; right:-100px;
+  background:radial-gradient(circle, rgba(250,204,21,0.03) 0%, transparent 70%);
+  animation:bb 16s ease-in-out infinite;
+}
+@keyframes ba { 0%,100%{transform:translate(0,0) scale(1)} 40%{transform:translate(60px,-40px) scale(1.1)} 70%{transform:translate(-30px,30px) scale(0.95)} }
+@keyframes bb { 0%,100%{transform:translate(0,0) scale(1)} 50%{transform:translate(-50px,40px) scale(1.08)} }
+
+/* ── NAV ── */
+nav {
+  position:fixed;
+  top:0; left:0; right:0;
+  z-index:200;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:14px 48px;
+  background:rgba(16,15,13,0.72);
+  backdrop-filter:blur(28px);
+  -webkit-backdrop-filter:blur(28px);
+  border-bottom:1px solid rgba(255,255,255,0.05);
+  transition:background 0.3s;
+}
+.nav-logo { display:flex; align-items:center; gap:10px; text-decoration:none; }
+.nav-wm { font-family:'Plus Jakarta Sans',sans-serif; font-size:17px; font-weight:600; color:#fff; letter-spacing:0; }
+.nav-wm span { color:var(--accent); }
+.nav-links { display:flex; gap:32px; list-style:none; }
+.nav-links a { text-decoration:none; color:var(--text-sec); font-size:13.5px; font-weight:500; transition:color 0.2s; }
+.nav-links a:hover { color:var(--text); }
+.nav-cta {
+  background:var(--accent);
+  color:#0D0D0D;
+  font-weight:700;
+  font-size:13.5px;
+  padding:9px 22px;
+  border-radius:100px;
+  text-decoration:none;
+  transition:transform 0.3s var(--ease-spring), opacity 0.2s;
+  letter-spacing:.1px;
+  display:inline-block;
+}
+.nav-cta:hover { opacity:.92; }
+
+/* ── HERO ── */
+.hero {
+  min-height:100dvh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+  z-index:1;
+  padding:120px 48px 80px;
+  gap:72px;
+  flex-wrap:wrap;
+}
+.hero-content { max-width:520px; flex:1; min-width:280px; }
+.hero-badge {
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  background:var(--accent-dim);
+  border:1px solid rgba(250,204,21,0.18);
+  border-radius:100px;
+  padding:5px 14px;
+  font-size:11px;
+  font-weight:600;
+  color:var(--accent);
+  letter-spacing:1.2px;
+  text-transform:uppercase;
+  margin-bottom:28px;
+}
+.hero-badge-dot {
+  width:6px; height:6px;
+  background:var(--accent);
+  border-radius:50%;
+  animation:bdot 2s ease-in-out infinite;
+}
+@keyframes bdot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.4;transform:scale(.7)} }
+
+h1 {
+  font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:clamp(32px,4.2vw,56px);
+  font-weight:700;
+  line-height:1.16;
+  letter-spacing:-0.5px;
+  margin-bottom:24px;
+  overflow:hidden;
+}
+.word-wrap { overflow:hidden; display:inline-block; }
+.word-inner {
+  display:inline-block;
+  transform:translateY(110%);
+  transition:transform 0.9s var(--ease-out);
+}
+h1.revealed .word-inner { transform:translateY(0); }
+h1 em { color:var(--accent); font-style:normal; }
+
+.hero-sub {
+  font-size:17px;
+  color:var(--text-sec);
+  line-height:1.8;
+  max-width:440px;
+  margin-bottom:40px;
+  font-weight:400;
+  opacity:0;
+  transform:translateY(20px);
+  transition:opacity 0.8s var(--ease-out) 0.6s, transform 0.8s var(--ease-out) 0.6s;
+}
+h1.revealed ~ .hero-sub { opacity:1; transform:none; }
+
+.hero-ctas {
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+  opacity:0;
+  transform:translateY(16px);
+  transition:opacity 0.8s var(--ease-out) 0.75s, transform 0.8s var(--ease-out) 0.75s;
+}
+h1.revealed ~ .hero-sub ~ .hero-ctas { opacity:1; transform:none; }
+
+.btn-store {
+  display:flex;
+  align-items:center;
+  gap:10px;
+  background:var(--surface);
+  border:1px solid var(--border-hi);
+  color:var(--text);
+  padding:12px 22px;
+  border-radius:100px;
+  text-decoration:none;
+  font-size:13px;
+  font-weight:600;
+  transition:background 0.25s, border-color 0.25s, transform 0.4s var(--ease-spring);
+}
+.btn-store:hover { background:var(--elevated); border-color:rgba(250,204,21,0.3); }
+.btn-store-icon { font-size:18px; line-height:1; }
+.btn-store-text small { display:block; font-size:9px; font-weight:400; color:var(--text-sec); text-transform:uppercase; letter-spacing:.7px; }
+
+/* ── HERO VISUAL ── */
+.hero-visual {
+  flex-shrink:0;
+  position:relative;
+  opacity:0;
+  transform:translateY(30px);
+  transition:opacity 1s var(--ease-out) 0.3s, transform 1s var(--ease-out) 0.3s;
+  padding:70px 24px 80px;
+  margin:-70px -24px -80px;
+}
+.hero-visual.visible { opacity:1; transform:none; }
+
+.phone-scene { perspective:1200px; width:310px; }
+.phone-3d { transform-style:preserve-3d; transition:transform 0.12s ease-out; }
+.phone-float { animation:pfloat 6s ease-in-out infinite; }
+@keyframes pfloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-20px)} }
+
+.phone-glow {
+  position:absolute;
+  bottom:-50px; left:-70px; right:-70px;
+  height:160px;
+  background:radial-gradient(ellipse at 50% 0%, rgba(250,204,21,.38) 0%, rgba(250,204,21,.1) 40%, transparent 70%);
+  filter:blur(32px);
+  animation:pglow 6s ease-in-out infinite;
+  pointer-events:none;
+  z-index:0;
+}
+@keyframes pglow { 0%,100%{opacity:.6} 50%{opacity:1} }
+
+.phone-frame {
+  width:300px;
+  background:#090808;
+  border-radius:46px;
+  border:1.5px solid rgba(255,255,255,.12);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.05),
+    inset 0 1px 0 rgba(255,255,255,.12),
+    0 0 0 1px rgba(0,0,0,.9),
+    0 60px 120px rgba(0,0,0,.85),
+    0 20px 60px rgba(0,0,0,.5),
+    0 0 120px rgba(250,204,21,.06);
+  overflow:hidden;
+  position:relative;
+  z-index:1;
+}
+.phone-island {
+  position:absolute;
+  top:14px; left:50%;
+  transform:translateX(-50%);
+  width:120px; height:34px;
+  background:#000;
+  border-radius:20px;
+  z-index:20;
+}
+.phone-screen {
+  padding:70px 18px 24px;
+  background:#0C0B0A;
+  min-height:600px;
+}
+.ps-hdr { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:18px; }
+.ps-greet { font-size:10.5px; color:#555; }
+.ps-name { font-size:16px; font-weight:700; color:#F2EFE8; font-family:'Plus Jakarta Sans',sans-serif; }
+.ps-date { font-size:10px; color:#3A3735; text-align:right; }
+
+.ps-ring-wrap { display:flex; justify-content:center; margin-bottom:16px; }
+.ps-ring-svg { width:144px; height:144px; }
+.ring-bg { fill:none; stroke:#1A1816; stroke-width:9; }
+.ring-fill {
+  fill:none; stroke:var(--accent); stroke-width:9; stroke-linecap:round;
+  stroke-dasharray:295; stroke-dashoffset:295;
+  transform-origin:center; transform:rotate(-90deg);
+  animation:ringdraw 2s 0.5s var(--ease-out) forwards;
+}
+@keyframes ringdraw { to { stroke-dashoffset:82; } }
+.ring-ct { font-family:'Plus Jakarta Sans',sans-serif; font-weight:700; font-size:22px; fill:#F2EFE8; }
+.ring-cs { font-size:8.5px; fill:#555; }
+
+.ps-macros { display:flex; justify-content:space-around; margin-bottom:14px; }
+.ps-macro { display:flex; flex-direction:column; align-items:center; gap:4px; }
+.ps-macro svg { width:46px; height:46px; }
+.ml { font-size:9px; color:#555; font-weight:500; }
+
+.ps-alert {
+  background:rgba(239,68,68,.08);
+  border:1px solid rgba(239,68,68,.28);
+  border-radius:12px;
+  padding:11px 14px;
+  margin-bottom:10px;
+}
+.ps-alert-t { font-size:10px; font-weight:700; color:#EF4444; margin-bottom:3px; }
+.ps-alert-b { font-size:8.5px; color:#777; line-height:1.5; }
+
+.ps-supps { background:#141312; border-radius:12px; padding:12px 14px; }
+.ps-supps-t { font-size:10px; font-weight:600; color:var(--accent); margin-bottom:8px; letter-spacing:.3px; }
+.ps-supp-row { display:flex; align-items:center; gap:7px; font-size:9px; color:#666; margin-bottom:5px; }
+.ps-supp-dot { width:6px; height:6px; border-radius:50%; background:var(--success); flex-shrink:0; }
+
+/* ── FLOATING HERO CHIPS ── */
+.hero-chip {
+  position:absolute;
+  background:var(--elevated);
+  border:1px solid var(--border-hi);
+  border-radius:12px;
+  padding:10px 14px;
+  pointer-events:none;
+  box-shadow:0 20px 40px rgba(0,0,0,.5);
+  opacity:0;
+  transition:opacity 0.8s var(--ease-out);
+}
+.hero-chip.visible { opacity:1; }
+.chip-top {
+  top:-52px; right:0;
+  animation:chipfloat 5s ease-in-out infinite;
+  min-width:175px;
+}
+.chip-btm {
+  bottom:110px; right:-52px;
+  animation:chipfloat2 6s ease-in-out infinite;
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+  background:rgba(12,11,9,0.82);
+  border-color:rgba(255,255,255,0.09);
+  border-left:2px solid rgba(250,204,21,0.55);
+  box-shadow:0 16px 48px rgba(0,0,0,0.65), 0 0 0 1px rgba(250,204,21,0.05);
+}
+@keyframes chipfloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+@keyframes chipfloat2 { 0%,100%{transform:translateY(0)} 50%{transform:translateY(7px)} }
+.chip-alert-t { font-size:9px; font-weight:700; color:#EF4444; margin-bottom:2px; display:flex; align-items:center; gap:5px; }
+.chip-alert-b { font-size:8px; color:var(--text-sec); }
+.chip-stat { display:flex; align-items:center; gap:8px; }
+.chip-stat-icon { width:28px; height:28px; border-radius:8px; background:var(--accent-dim); display:flex; align-items:center; justify-content:center; color:var(--accent); }
+.chip-stat-val { font-family:'Plus Jakarta Sans',sans-serif; font-size:14px; font-weight:700; color:var(--text); }
+.chip-stat-lbl { font-size:9px; color:var(--text-sec); }
+
+/* ── PHONE ENV RINGS ── */
+.phone-env {
+  position:absolute;
+  top:50%; left:50%;
+  transform:translate(-50%,-50%);
+  pointer-events:none;
+  z-index:0;
+}
+.phone-env-ring {
+  position:absolute;
+  border-radius:50%;
+  border:1px solid rgba(250,204,21,0.06);
+  top:50%; left:50%;
+  transform:translate(-50%,-50%);
+}
+.phone-env-ring:nth-child(1) { width:380px; height:380px; border-color:rgba(250,204,21,0.07); }
+.phone-env-ring:nth-child(2) { width:480px; height:480px; border-color:rgba(250,204,21,0.045); }
+.phone-env-ring:nth-child(3) { width:580px; height:580px; border-color:rgba(250,204,21,0.025); }
+.phone-env-dot {
+  position:absolute;
+  width:6px; height:6px;
+  border-radius:50%;
+  background:rgba(250,204,21,0.35);
+  box-shadow:0 0 8px rgba(250,204,21,0.5);
+  top:50%; left:50%;
+}
+.phone-env-dot:nth-child(4) { transform:translate(-190px,-10px); }
+.phone-env-dot:nth-child(5) { transform:translate(180px,40px); width:4px; height:4px; opacity:.6; }
+.phone-env-dot:nth-child(6) { transform:translate(-60px,200px); width:3px; height:3px; opacity:.4; }
+
+/* ── PHONE NAV ── */
+.phone-nav {
+  display:flex;
+  gap:8px;
+  margin-top:24px;
+  justify-content:center;
+}
+.ph-nav-btn {
+  display:flex;
+  align-items:center;
+  gap:6px;
+  padding:8px 16px;
+  border-radius:100px;
+  background:rgba(255,255,255,0.035);
+  border:1px solid rgba(255,255,255,0.07);
+  color:var(--text-sec);
+  font-size:11.5px;
+  font-weight:600;
+  cursor:pointer;
+  transition:all 0.25s var(--ease-out);
+  font-family:'Plus Jakarta Sans',sans-serif;
+  letter-spacing:.2px;
+}
+.ph-nav-btn svg { width:13px; height:13px; opacity:.7; flex-shrink:0; }
+.ph-nav-btn:hover { background:rgba(250,204,21,0.06); border-color:rgba(250,204,21,0.18); color:var(--text); }
+.ph-nav-btn:hover svg { opacity:1; }
+.ph-nav-btn.active { background:rgba(250,204,21,0.1); border-color:rgba(250,204,21,0.3); color:var(--accent); }
+.ph-nav-btn.active svg { opacity:1; }
+
+/* ── PHONE INNER (screen cycling) ── */
+.phone-frame { cursor:pointer; }
+.phone-inner { width:100%; transition:opacity 0.22s ease, transform 0.22s cubic-bezier(0.4,0,0.2,1); }
+.phone-inner.fade-out { opacity:0; transform:scale(0.96) translateY(6px); }
+.phone-inner.fade-in-start { opacity:0; transform:scale(0.96) translateY(-6px); transition:none; }
+
+/* ── PHONE DOTS + HINT ── */
+.phone-dots { display:flex; gap:6px; justify-content:center; margin-top:16px; }
+.ph-dot { width:6px; height:6px; border-radius:50%; background:var(--border-hi); transition:all 0.35s var(--ease-out); flex-shrink:0; cursor:pointer; }
+.ph-dot:hover { background:var(--text-sec); }
+.ph-dot.active { width:22px; border-radius:3px; background:var(--accent); }
+.phone-hint { text-align:center; font-size:11px; font-weight:600; color:var(--text-sec); letter-spacing:0.14em; text-transform:uppercase; margin-top:9px; }
+
+/* ── SCANNER SCREEN ── */
+.ps-scanner { display:flex; flex-direction:column; min-height:580px; background:#0C0B0A; }
+.ps-scan-hdr { padding:66px 16px 14px; }
+.ps-scan-label { font-size:13px; font-weight:700; color:var(--text); font-family:'Plus Jakarta Sans',sans-serif; }
+.ps-scan-view { position:relative; margin:0 16px; height:250px; background:#070605; border-radius:16px; overflow:hidden; display:flex; align-items:center; justify-content:center; }
+.ps-scan-corner { position:absolute; width:22px; height:22px; border-color:var(--accent); border-style:solid; border-width:0; }
+.ps-scan-corner.tl { top:12px; left:12px; border-top-width:2.5px; border-left-width:2.5px; border-radius:4px 0 0 0; }
+.ps-scan-corner.tr { top:12px; right:12px; border-top-width:2.5px; border-right-width:2.5px; border-radius:0 4px 0 0; }
+.ps-scan-corner.bl { bottom:12px; left:12px; border-bottom-width:2.5px; border-left-width:2.5px; border-radius:0 0 0 4px; }
+.ps-scan-corner.br { bottom:12px; right:12px; border-bottom-width:2.5px; border-right-width:2.5px; border-radius:0 0 4px 0; }
+.ps-scan-beam { position:absolute; left:0; right:0; height:2px; background:linear-gradient(90deg,transparent,rgba(250,204,21,.8),transparent); box-shadow:0 0 14px rgba(250,204,21,.5); animation:scanbeam 2s ease-in-out infinite; }
+@keyframes scanbeam { 0%{top:10%} 50%{top:85%} 100%{top:10%} }
+.ps-scan-icon { opacity:0.2; }
+.ps-scan-footer { padding:20px 16px; flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; }
+.ps-scanning-text { font-size:9px; font-weight:600; color:var(--accent); letter-spacing:0.18em; }
+.ps-scan-dots { display:flex; gap:5px; }
+.ps-scan-dots span { width:5px; height:5px; border-radius:50%; background:var(--accent); opacity:0.3; animation:scandot 1.2s ease-in-out infinite; }
+.ps-scan-dots span:nth-child(2) { animation-delay:.2s; }
+.ps-scan-dots span:nth-child(3) { animation-delay:.4s; }
+@keyframes scandot { 0%,100%{opacity:.2;transform:scale(.8)} 50%{opacity:1;transform:scale(1.2)} }
+
+/* ── SCAN RESULT SCREEN ── */
+.ps-result-hdr { display:flex; justify-content:space-between; align-items:center; padding:66px 16px 10px; background:#0C0B0A; }
+.ps-result-label { font-size:10px; font-weight:700; color:var(--text); font-family:'Plus Jakarta Sans',sans-serif; }
+.ps-result-rescan { font-size:9px; color:var(--accent); }
+.ps-result-food { padding:0 16px; font-size:14px; font-weight:700; color:var(--text); font-family:'Plus Jakarta Sans',sans-serif; background:#0C0B0A; }
+.ps-result-sub { padding:2px 16px 12px; font-size:8px; color:var(--text-sec); background:#0C0B0A; }
+.ps-result-macros { display:flex; gap:6px; padding:0 16px 12px; background:#0C0B0A; }
+.ps-mac-pill { background:#171614; border-radius:10px; padding:7px 8px; text-align:center; flex:1; }
+.ps-mac-v { font-size:11px; font-weight:700; color:var(--text); font-family:'Plus Jakarta Sans',sans-serif; }
+.ps-mac-l { font-size:7px; color:var(--text-ter); margin-top:2px; }
+.ps-warn-card { margin:0 16px 8px; border-radius:10px; padding:8px 10px; }
+.ps-warn-card.danger { background:rgba(239,68,68,.07); border:1px solid rgba(239,68,68,.3); }
+.ps-warn-card.caution { background:rgba(245,158,11,.07); border:1px solid rgba(245,158,11,.3); }
+.ps-warn-t { font-size:9px; font-weight:700; margin-bottom:3px; display:flex; align-items:center; gap:5px; }
+.danger .ps-warn-t { color:#EF4444; }
+.caution .ps-warn-t { color:#F59E0B; }
+.ps-warn-b { font-size:8px; color:#555; line-height:1.4; }
+.ps-add-btn { margin:12px 16px 0; background:var(--accent); color:#0C0B0A; border-radius:12px; padding:10px; text-align:center; font-size:9.5px; font-weight:700; font-family:'Plus Jakarta Sans',sans-serif; }
+
+/* ── STATS TICKER ── */
+.ticker {
+  position:relative;
+  z-index:2;
+  background:#0A0908;
+  border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+  overflow:hidden;
+  padding:14px 0;
+}
+.ticker::before,.ticker::after {
+  content:'';
+  position:absolute;
+  top:0; bottom:0;
+  width:100px;
+  z-index:2;
+  pointer-events:none;
+}
+.ticker::before { left:0; background:linear-gradient(90deg,#0A0908,transparent); }
+.ticker::after { right:0; background:linear-gradient(270deg,#0A0908,transparent); }
+.ticker-track {
+  display:flex;
+  gap:0;
+  animation:tick 30s linear infinite;
+  white-space:nowrap;
+  width:max-content;
+}
+.ticker-track:hover { animation-play-state:paused; }
+@keyframes tick { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+.tick-item {
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  padding:0 40px;
+  font-size:12.5px;
+  font-weight:600;
+  color:var(--text-sec);
+  letter-spacing:.1px;
+}
+.tick-item strong { color:var(--accent); font-weight:700; }
+.tick-sep { color:var(--text-ter); font-size:16px; }
+
+/* ── SECTION COMMONS ── */
+section { position:relative; z-index:1; }
+.si { max-width:1080px; margin:0 auto; padding:100px 48px; }
+.stag {
+  font-size:10.5px;
+  font-weight:700;
+  letter-spacing:2.5px;
+  text-transform:uppercase;
+  color:var(--accent);
+  margin-bottom:12px;
+  opacity:.85;
+}
+h2 {
+  font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:clamp(24px,3vw,40px);
+  font-weight:700;
+  letter-spacing:-0.25px;
+  line-height:1.2;
+  margin-bottom:16px;
+  color:var(--text);
+}
+.ssub { color:var(--text-sec); font-size:16px; max-width:480px; line-height:1.8; margin-bottom:60px; font-weight:400; }
+
+.reveal { opacity:0; transform:translateY(26px); transition:opacity 0.8s var(--ease-out), transform 0.8s var(--ease-out); }
+.reveal.visible { opacity:1; transform:none; }
+
+/* ── DIVIDER ── */
+.ydiv {
+  height:1px;
+  background:linear-gradient(90deg,transparent,rgba(250,204,21,.12) 30%,rgba(250,204,21,.22) 50%,rgba(250,204,21,.12) 70%,transparent);
+  position:relative;
+  z-index:1;
+}
+
+/* ── FEATURES BENTO ── */
+#features { background:var(--bg-warm); }
+.feat-bento {
+  display:grid;
+  grid-template-columns:2fr 1fr;
+  gap:14px;
+}
+.fb { grid-column:unset; }
+.fb-tall { grid-row:span 2; }
+.fb-wide { grid-column:span 2; }
+
+.feat-card {
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  padding:32px;
+  position:relative;
+  overflow:hidden;
+  transition:border-color 0.3s, transform 0.15s ease-out, box-shadow 0.3s;
+  cursor:default;
+}
+.feat-card::before {
+  content:'';
+  position:absolute;
+  inset:0;
+  border-radius:var(--r);
+  background:radial-gradient(circle at var(--mx,50%) var(--my,50%), rgba(250,204,21,.055) 0%, transparent 55%);
+  opacity:0;
+  transition:opacity 0.4s;
+  pointer-events:none;
+}
+.feat-card:hover::before { opacity:1; }
+.feat-card:hover {
+  border-color:rgba(250,204,21,.18);
+  box-shadow:0 24px 50px rgba(0,0,0,.4), 0 0 0 1px rgba(250,204,21,.08);
+}
+.feat-card-shine {
+  position:absolute;
+  inset:0;
+  border-radius:var(--r);
+  background:radial-gradient(circle at var(--mx,50%) var(--my,50%), rgba(255,255,255,.06) 0%, transparent 50%);
+  opacity:0;
+  pointer-events:none;
+  transition:opacity 0.3s;
+}
+.feat-card:hover .feat-card-shine { opacity:1; }
+
+.feat-icon-wrap {
+  width:48px; height:48px;
+  border-radius:14px;
+  background:var(--accent-dim);
+  border:1px solid rgba(250,204,21,.12);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  color:var(--accent);
+  margin-bottom:20px;
+  transition:background 0.3s, border-color 0.3s;
+}
+.feat-card:hover .feat-icon-wrap { background:rgba(250,204,21,.12); border-color:rgba(250,204,21,.22); }
+.feat-icon-wrap svg { width:22px; height:22px; }
+
+.feat-title {
+  font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:18px;
+  font-weight:700;
+  margin-bottom:10px;
+  color:var(--text);
+  letter-spacing:-.3px;
+}
+.feat-desc { font-size:14.5px; color:var(--text-sec); line-height:1.75; font-weight:400; }
+
+.feat-large-num {
+  font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:44px;
+  font-weight:700;
+  color:var(--accent);
+  letter-spacing:-1px;
+  line-height:1.1;
+  margin-top:auto;
+  display:block;
+  margin-bottom:4px;
+}
+
+/* ── HOW IT WORKS (vertical timeline) ── */
+.how-wrap { background:#090807; }
+.timeline { display:flex; flex-direction:column; gap:0; max-width:680px; }
+.tl-item {
+  display:grid;
+  grid-template-columns:64px 1fr;
+  gap:0 28px;
+  position:relative;
+}
+.tl-left {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+}
+.tl-num {
+  width:48px; height:48px;
+  border-radius:50%;
+  background:var(--surface);
+  border:1px solid var(--border-hi);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:15px;
+  font-weight:700;
+  color:var(--accent);
+  flex-shrink:0;
+  position:relative;
+  z-index:1;
+  transition:background 0.3s, border-color 0.3s, box-shadow 0.3s;
+}
+.tl-item:hover .tl-num {
+  background:var(--accent-dim);
+  border-color:rgba(250,204,21,.3);
+  box-shadow:0 0 24px rgba(250,204,21,.12);
+}
+.tl-line {
+  flex:1;
+  width:1px;
+  background:linear-gradient(to bottom,rgba(250,204,21,.15),transparent);
+  margin:6px 0;
+  min-height:40px;
+}
+.tl-item:last-child .tl-line { display:none; }
+.tl-content { padding:10px 0 48px; }
+.tl-title {
+  font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:18px;
+  font-weight:700;
+  color:var(--text);
+  margin-bottom:8px;
+  letter-spacing:-.4px;
+}
+.tl-desc { font-size:14.5px; color:var(--text-sec); line-height:1.75; max-width:500px; }
+
+/* ── COMPARISON ── */
+.compare-tbl {
+  width:100%;
+  border-collapse:collapse;
+  background:var(--surface);
+  border-radius:var(--r);
+  overflow:hidden;
+  border:1px solid var(--border);
+}
+.compare-tbl th {
+  padding:16px 24px;
+  text-align:left;
+  font-size:10.5px;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:.8px;
+  color:var(--text-sec);
+  border-bottom:1px solid var(--border);
+  background:#111;
+}
+.compare-tbl th.cf { background:rgba(250,204,21,.05); color:var(--accent); border-left:1px solid rgba(250,204,21,.12); border-right:1px solid rgba(250,204,21,.12); }
+.compare-tbl td { padding:15px 24px; font-size:14px; border-bottom:1px solid rgba(255,255,255,.03); }
+.compare-tbl tr:last-child td { border-bottom:none; }
+.compare-tbl tr:hover td { background:rgba(255,255,255,.015); }
+.compare-tbl td.cf { background:rgba(250,204,21,.03); border-left:1px solid rgba(250,204,21,.08); border-right:1px solid rgba(250,204,21,.08); color:var(--accent); font-weight:600; }
+.compare-tbl td.oth { color:var(--text-ter); }
+.compare-tbl td.feat { color:var(--text-sec); font-size:13.5px; }
+.ck { color:var(--success); font-size:16px; }
+.cx { color:var(--text-ter); font-size:16px; }
+.cky { color:var(--accent); font-size:16px; }
+
+/* ── PRICING ── */
+.price-wrap { background:#090807; }
+.price-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:18px; max-width:700px; margin:0 auto; }
+.price-card {
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  padding:32px;
+  position:relative;
+  transition:transform 0.3s var(--ease-spring);
+}
+.price-card:hover { transform:translateY(-5px); }
+
+/* Animated border on featured card */
+.price-card.feat {
+  background:linear-gradient(160deg,rgba(250,204,21,.05),var(--surface));
+  border-color:transparent;
+  z-index:0;
+}
+.price-card.feat::before {
+  content:'';
+  position:absolute;
+  inset:-1px;
+  border-radius:calc(var(--r) + 1px);
+  background:conic-gradient(from var(--rot), rgba(250,204,21,0) 0deg, rgba(250,204,21,.7) 80deg, rgba(250,204,21,0) 160deg, rgba(250,204,21,0) 360deg);
+  animation:spin-border 3.5s linear infinite;
+  z-index:-1;
+}
+.price-card.feat::after {
+  content:'';
+  position:absolute;
+  inset:1px;
+  border-radius:calc(var(--r) - 1px);
+  background:linear-gradient(160deg,rgba(250,204,21,.05),var(--surface));
+  z-index:-1;
+}
+@keyframes spin-border { to { --rot: 360deg; } }
+
+.price-badge {
+  position:absolute;
+  top:-12px; left:50%;
+  transform:translateX(-50%);
+  background:var(--accent);
+  color:#0D0D0D;
+  font-size:10px;
+  font-weight:700;
+  padding:3px 14px;
+  border-radius:100px;
+  letter-spacing:.6px;
+  text-transform:uppercase;
+  white-space:nowrap;
+}
+.price-lbl { font-size:11.5px; font-weight:600; color:var(--text-sec); text-transform:uppercase; letter-spacing:1px; margin-bottom:12px; }
+.price-amt { font-family:'Plus Jakarta Sans',sans-serif; font-size:46px; font-weight:700; line-height:1.1; margin-bottom:4px; letter-spacing:-0.5px; }
+.price-amt sup { font-size:22px; vertical-align:super; letter-spacing:0; }
+.price-per { font-size:13px; color:var(--text-sec); margin-bottom:8px; }
+.price-save { display:inline-block; background:rgba(34,197,94,.1); color:#22C55E; font-size:11px; font-weight:600; padding:3px 12px; border-radius:100px; margin-bottom:24px; }
+.price-feats { list-style:none; margin-bottom:28px; }
+.price-feats li { font-size:13.5px; color:var(--text-sec); padding:7px 0; display:flex; align-items:center; gap:10px; border-bottom:1px solid rgba(255,255,255,.035); font-weight:400; }
+.price-feats li:last-child { border-bottom:none; }
+.price-feats li::before { content:''; width:16px; height:16px; border-radius:50%; background:rgba(250,204,21,.1); border:1px solid rgba(250,204,21,.2); flex-shrink:0; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 10 10' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M2.5 5l2 2 3-3' stroke='%23FACC15' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:center; background-size:10px; }
+.price-btn {
+  width:100%;
+  padding:14px;
+  border-radius:100px;
+  font-size:14px;
+  font-weight:700;
+  cursor:pointer;
+  border:1px solid var(--border-hi);
+  transition:all 0.3s var(--ease-spring);
+  font-family:'Outfit',sans-serif;
+}
+.price-btn.primary { background:var(--accent); color:#0D0D0D; border-color:transparent; }
+.price-btn.primary:hover { opacity:.92; transform:translateY(-2px); }
+.price-btn.secondary { background:transparent; color:var(--text); }
+.price-btn.secondary:hover { border-color:rgba(250,204,21,.25); background:var(--accent-dim); }
+.price-fine { font-size:11px; color:var(--text-ter); text-align:center; margin-top:10px; }
+
+/* ── SCREENSHOTS CAROUSEL ── */
+.shots-wrap { background:var(--bg-warm); overflow:hidden; }
+.carousel-outer {
+  overflow:hidden;
+  cursor:grab;
+  user-select:none;
+  margin:60px -48px 0;
+  padding:0 48px;
+  position:relative;
+}
+.carousel-outer::before,.carousel-outer::after {
+  content:'';
+  position:absolute;
+  top:0; bottom:0;
+  width:80px;
+  z-index:2;
+  pointer-events:none;
+}
+.carousel-outer::before { left:0; background:linear-gradient(90deg,var(--bg-warm),transparent); }
+.carousel-outer::after { right:0; background:linear-gradient(270deg,var(--bg-warm),transparent); }
+.carousel-outer:active { cursor:grabbing; }
+.carousel-track {
+  display:flex;
+  gap:24px;
+  overflow-x:auto;
+  scroll-snap-type:x mandatory;
+  scroll-behavior:smooth;
+  -ms-overflow-style:none;
+  scrollbar-width:none;
+  padding-bottom:4px;
+  justify-content:center;
+}
+.carousel-track::-webkit-scrollbar { display:none; }
+.shot-item {
+  flex-shrink:0;
+  scroll-snap-align:start;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+}
+.shot-phone-mini {
+  width:230px;
+  background:#0A0908;
+  border-radius:40px;
+  border:1.5px solid rgba(255,255,255,.09);
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.03),
+    0 30px 60px rgba(0,0,0,.6),
+    0 0 60px rgba(250,204,21,.04);
+  overflow:hidden;
+  position:relative;
+  transition:transform 0.3s var(--ease-spring), box-shadow 0.3s;
+}
+.shot-phone-mini:hover {
+  transform:translateY(-8px);
+  box-shadow:0 40px 80px rgba(0,0,0,.7), 0 0 80px rgba(250,204,21,.08);
+}
+.spm-island { position:absolute; top:11px; left:50%; transform:translateX(-50%); width:100px; height:28px; background:#000; border-radius:18px; z-index:20; }
+.shot-label { margin-top:20px; text-align:center; padding-bottom:10px; }
+.shot-label strong { font-family:'Plus Jakarta Sans',sans-serif; font-size:14px; font-weight:700; color:var(--text); display:block; margin-bottom:5px; }
+.shot-label span { font-size:12px; color:var(--text-sec); }
+
+/* ── SCREENSHOT PHONE SCREENS ── */
+.sps-scanner { background:#060504; padding:52px 0 0; display:flex; flex-direction:column; height:490px; }
+.sps-sh { padding:0 14px 10px; }
+.sps-sh-title { font-family:'Plus Jakarta Sans',sans-serif; font-size:12px; font-weight:700; color:var(--text); display:flex; align-items:center; gap:7px; }
+.sps-sh-icon { width:18px; height:18px; color:var(--accent); }
+.sps-vf { flex:1; position:relative; background:#010101; overflow:hidden; }
+.sps-vf-grid { position:absolute; inset:0; background-image:linear-gradient(rgba(250,204,21,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(250,204,21,.04) 1px,transparent 1px); background-size:26px 26px; }
+.sps-corner { position:absolute; width:22px; height:22px; border-color:var(--accent); border-style:solid; opacity:.85; }
+.sps-corner.tl { top:16px; left:16px; border-width:2px 0 0 2px; }
+.sps-corner.tr { top:16px; right:16px; border-width:2px 2px 0 0; }
+.sps-corner.bl { bottom:16px; left:16px; border-width:0 0 2px 2px; }
+.sps-corner.br { bottom:16px; right:16px; border-width:0 2px 2px 0; }
+.sps-beam { position:absolute; left:16px; right:16px; height:1.5px; background:linear-gradient(90deg,transparent,rgba(250,204,21,.3) 20%,var(--accent) 50%,rgba(250,204,21,.3) 80%,transparent); box-shadow:0 0 14px rgba(250,204,21,.55); animation:spbeam 2.4s ease-in-out infinite; top:16px; }
+@keyframes spbeam { 0%{top:16px;opacity:1} 50%{top:calc(100% - 18px);opacity:.9} 100%{top:16px;opacity:1} }
+.sps-pulse { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:48px; height:48px; border:1.5px solid rgba(250,204,21,.12); border-radius:50%; animation:sppulse 2s ease-out infinite; }
+@keyframes sppulse { 0%{transform:translate(-50%,-50%) scale(1);opacity:.5} 100%{transform:translate(-50%,-50%) scale(2.6);opacity:0} }
+.sps-vf-lbl { position:absolute; bottom:12px; left:0; right:0; text-align:center; font-size:8px; color:var(--accent); font-weight:600; letter-spacing:2px; text-transform:uppercase; }
+.sps-bottom { padding:14px 14px 18px; display:flex; justify-content:center; align-items:center; flex-direction:column; gap:7px; background:#060504; }
+.sps-btn { width:50px; height:50px; border-radius:50%; background:var(--accent); display:flex; align-items:center; justify-content:center; }
+.sps-btn svg { width:22px; height:22px; color:#0D0D0D; }
+.sps-hint { font-size:8px; color:var(--text-ter); letter-spacing:.8px; text-transform:uppercase; }
+
+.sps-result { background:#0C0B0A; padding:52px 0 0; height:490px; overflow:hidden; display:flex; flex-direction:column; }
+.spr-hdr { padding:8px 14px 10px; display:flex; justify-content:space-between; align-items:center; }
+.spr-title { font-family:'Plus Jakarta Sans',sans-serif; font-size:12px; font-weight:700; color:var(--text); }
+.spr-back { font-size:10px; color:var(--text-sec); }
+.spr-food { padding:0 14px 9px; }
+.spr-fname { font-family:'Plus Jakarta Sans',sans-serif; font-size:14px; font-weight:700; color:var(--text); margin-bottom:2px; }
+.spr-cal { font-size:10px; color:var(--text-sec); }
+.spr-macros { display:grid; grid-template-columns:repeat(4,1fr); gap:5px; padding:0 14px 10px; }
+.spr-m { background:#1A1816; border-radius:9px; padding:7px 4px; text-align:center; }
+.spr-mv { font-family:'Plus Jakarta Sans',sans-serif; font-size:12px; font-weight:700; color:var(--text); }
+.spr-mk { font-size:7px; color:#444; text-transform:uppercase; letter-spacing:.3px; margin-top:1px; }
+.spr-alert { margin:0 14px 7px; background:rgba(239,68,68,.07); border:1px solid rgba(239,68,68,.22); border-radius:10px; padding:9px 11px; }
+.spr-alert-t { font-size:9px; font-weight:700; color:#EF4444; margin-bottom:3px; display:flex; align-items:center; gap:5px; }
+.spr-alert-b { font-size:8px; color:#777; line-height:1.5; }
+.spr-warn { margin:0 14px 10px; background:rgba(245,158,11,.07); border:1px solid rgba(245,158,11,.18); border-radius:10px; padding:9px 11px; }
+.spr-warn-t { font-size:9px; font-weight:700; color:#F59E0B; margin-bottom:3px; display:flex; align-items:center; gap:5px; }
+.spr-warn-b { font-size:8px; color:#777; }
+.spr-addbtn { margin:0 14px; background:var(--accent); border-radius:10px; padding:10px; text-align:center; font-family:'Plus Jakarta Sans',sans-serif; font-size:11px; font-weight:700; color:#0D0D0D; }
+
+.sps-supp { background:#0C0B0A; padding:52px 0 0; height:490px; overflow:hidden; display:flex; flex-direction:column; }
+.spsu-hdr { padding:8px 14px 12px; }
+.spsu-htitle { font-family:'Plus Jakarta Sans',sans-serif; font-size:12px; font-weight:700; color:var(--text); margin-bottom:2px; display:flex; align-items:center; gap:7px; }
+.spsu-sub { font-size:9px; color:var(--text-ter); }
+.spsu-prog { margin:0 14px 12px; background:#171614; border-radius:10px; padding:11px; }
+.spsu-prog-t { font-size:9px; color:var(--text-ter); margin-bottom:7px; }
+.spsu-bar-bg { height:4px; background:#222; border-radius:2px; overflow:hidden; }
+.spsu-bar-fill { height:4px; background:var(--accent); border-radius:2px; width:66%; }
+.spsu-prog-lbl { font-size:8px; color:var(--accent); margin-top:5px; font-weight:600; }
+.spsu-item { margin:0 14px 7px; background:#171614; border-radius:10px; padding:10px 12px; display:flex; align-items:center; justify-content:space-between; }
+.spsu-item-l { display:flex; flex-direction:column; gap:2px; }
+.spsu-item-name { font-size:10.5px; font-weight:600; color:var(--text); }
+.spsu-item-dose { font-size:8px; color:var(--text-ter); }
+.spsu-check { width:20px; height:20px; border-radius:50%; background:rgba(34,197,94,.1); border:1px solid rgba(34,197,94,.3); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.spsu-check svg { width:11px; height:11px; color:var(--success); }
+.spsu-pending { width:20px; height:20px; border-radius:50%; background:#1A1816; border:1px solid var(--border); flex-shrink:0; }
+.spsu-add { margin:10px 14px 0; background:var(--accent); border-radius:10px; padding:10px; text-align:center; font-family:'Plus Jakarta Sans',sans-serif; font-size:11px; font-weight:700; color:#0D0D0D; }
+
+/* ── BOTTOM CTA ── */
+.bottom-cta {
+  background:#090807;
+  position:relative;
+  overflow:hidden;
+}
+.bottom-cta::before {
+  content:'';
+  position:absolute;
+  top:-200px; left:50%;
+  transform:translateX(-50%);
+  width:800px; height:400px;
+  background:radial-gradient(ellipse, rgba(250,204,21,.08) 0%, transparent 70%);
+  pointer-events:none;
+}
+.cta-inner { max-width:720px; margin:0 auto; padding:120px 48px; text-align:center; }
+.cta-inner h2 { font-size:clamp(32px,4.5vw,56px); letter-spacing:-0.5px; margin-bottom:18px; }
+.cta-inner .ssub { margin:0 auto 42px; text-align:center; max-width:460px; }
+.cta-btns { display:flex; gap:14px; justify-content:center; flex-wrap:wrap; }
+.cta-primary {
+  background:var(--accent);
+  color:#0D0D0D;
+  font-weight:700;
+  font-size:15px;
+  padding:14px 32px;
+  border-radius:100px;
+  text-decoration:none;
+  display:inline-block;
+  transition:transform 0.4s var(--ease-spring), opacity 0.2s;
+  letter-spacing:.1px;
+}
+.cta-primary:hover { opacity:.92; }
+.cta-sec {
+  background:transparent;
+  border:1px solid var(--border-hi);
+  color:var(--text-sec);
+  font-weight:600;
+  font-size:14px;
+  padding:14px 28px;
+  border-radius:100px;
+  text-decoration:none;
+  display:inline-block;
+  transition:border-color 0.2s, color 0.2s, transform 0.4s var(--ease-spring);
+}
+.cta-sec:hover { border-color:rgba(250,204,21,.25); color:var(--text); }
+
+/* ── TRUST CARDS ── */
+.test-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+.trust-card {
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  padding:30px 26px;
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+  transition:border-color 0.3s, transform 0.15s ease-out;
+  cursor:pointer;
+}
+.trust-card:hover { border-color:rgba(250,204,21,.18); transform:translateY(-4px); }
+.trust-card-icon {
+  width:42px; height:42px;
+  border-radius:12px;
+  background:var(--accent-dim);
+  border:1px solid rgba(250,204,21,.12);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.trust-card-icon svg { width:20px; height:20px; color:var(--accent); }
+.trust-card-head {
+  font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:15.5px;
+  font-weight:700;
+  color:var(--text);
+  letter-spacing:-.2px;
+  line-height:1.3;
+}
+.trust-card-body { font-size:13.5px; color:var(--text-sec); line-height:1.75; }
+.trust-card-stat {
+  margin-top:4px;
+  font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:22px;
+  font-weight:700;
+  color:var(--accent);
+  letter-spacing:-0.5px;
+}
+
+/* ── FOOTER ── */
+footer { background:#060504; border-top:1px solid var(--border); position:relative; z-index:1; }
+.fi { max-width:1080px; margin:0 auto; padding:60px 48px 40px; }
+.ft { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:48px; gap:40px; flex-wrap:wrap; }
+.fb-tag { font-size:13px; color:var(--text-ter); margin-top:8px; font-weight:400; }
+.fcol h4 { font-family:'Plus Jakarta Sans',sans-serif; font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; color:var(--text-ter); margin-bottom:14px; }
+.fcol a { display:block; color:#4A4845; text-decoration:none; font-size:13.5px; margin-bottom:10px; transition:color 0.2s; }
+.fcol a:hover { color:var(--text); }
+.fb { display:flex; justify-content:space-between; align-items:center; padding-top:24px; border-top:1px solid #0E0D0C; font-size:11.5px; color:var(--text-ter); gap:14px; flex-wrap:wrap; }
+.legal-disc { font-size:10.5px; color:var(--text-ter); line-height:1.6; max-width:600px; margin-top:16px; }
+
+/* ── GRADIENT ACCENT TEXT ── */
+h2 em, h1 em {
+  font-style: normal;
+  background: linear-gradient(120deg, #FACC15 0%, #FDE68A 45%, #F59E0B 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── HERO GRID MESH ── */
+.hero-mesh {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    linear-gradient(rgba(250,204,21,0.032) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(250,204,21,0.032) 1px, transparent 1px);
+  background-size: 52px 52px;
+  mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 100%);
+}
+
+/* ── STAG LINE REVEAL ── */
+.stag {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+.stag::before {
+  content: '';
+  display: inline-block;
+  height: 1px;
+  width: 0;
+  background: var(--accent);
+  opacity: 0.5;
+  transition: width 0.7s var(--ease-out) 0.1s;
+}
+.reveal.visible .stag::before { width: 28px; }
+
+/* ── STICKY CTA BAR ── */
+#sticky-bar {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  z-index: 500;
+  background: rgba(16,15,13,0.88);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(250,204,21,0.22);
+  border-radius: 100px;
+  padding: 10px 10px 10px 22px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.55), 0 0 0 1px rgba(250,204,21,0.06), 0 0 40px rgba(250,204,21,0.07);
+  transition: transform 0.6s cubic-bezier(0.34,1.2,0.64,1), opacity 0.4s ease;
+  opacity: 0;
+  white-space: nowrap;
+}
+#sticky-bar.visible {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+.sticky-text {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-sec);
+  letter-spacing: -0.1px;
+}
+.sticky-text strong { color: var(--text); }
+.sticky-btn {
+  background: var(--accent);
+  color: #0D0D0D;
+  font-weight: 700;
+  font-size: 13px;
+  padding: 9px 22px;
+  border-radius: 100px;
+  text-decoration: none;
+  transition: opacity 0.2s, transform 0.3s cubic-bezier(0.34,1.2,0.64,1);
+  letter-spacing: 0.1px;
+}
+.sticky-btn:hover { opacity: 0.9; transform: scale(1.04); }
+.sticky-close {
+  background: none;
+  border: none;
+  color: var(--text-ter);
+  cursor: pointer;
+  padding: 4px 8px;
+  font-size: 18px;
+  line-height: 1;
+  transition: color 0.2s;
+}
+.sticky-close:hover { color: var(--text-sec); }
+
+/* ── RESPONSIVE ── */
+@media(max-width:900px) {
+  nav { padding:12px 20px; }
+  .nav-links { display:none; }
+  .hero { flex-direction:column; text-align:center; gap:52px; padding:110px 24px 72px; }
+  .hero-ctas { justify-content:center; }
+  .hero-badge { margin:0 auto 28px; }
+  .hero-sub { margin-left:auto; margin-right:auto; }
+  .chip-top,.chip-btm { display:none; }
+  .feat-bento { grid-template-columns:1fr; }
+  .fb-tall,.fb-wide { grid-row:auto; grid-column:auto; }
+  .price-grid { grid-template-columns:1fr; }
+  .test-grid { grid-template-columns:1fr; }
+  .how-grid { grid-template-columns:1fr; }
+  .si { padding:72px 24px; }
+  .carousel-outer { margin:50px -24px 0; padding:0 24px; }
+  .cta-inner { padding:80px 24px; }
+  .fi { padding:48px 24px 32px; }
+}
+@media(max-width:540px) {
+  .shot-phone-mini { width:200px; }
+  .sps-scanner,.sps-result,.sps-supp { height:420px; }
+}
+@media(prefers-reduced-motion:reduce) {
+  *, *::before, *::after { animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; }
+  .ps-scan-beam, .ps-scan-dot, .ps-scan-dots span { animation:none !important; }
+  .hero-h1-word, .heroVisual, .chip-top, .chip-btm { opacity:1 !important; transform:none !important; }
+  .trust-card-stat[data-count] { transition:none !important; }
+}
+</style>
+</head>
+<body>
+
+<div id="scroll-prog"></div>
+<canvas id="particles"></canvas>
+<div class="blob-wrap">
+  <div class="blob blob-a"></div>
+  <div class="blob blob-b"></div>
+</div>
+
+<!-- NAV -->
+<nav id="nav">
+  <a href="#" class="nav-logo">
+    <svg width="34" height="34" viewBox="0 0 36 36" fill="none">
+      <circle cx="18" cy="18" r="14" stroke="#FACC15" stroke-width="2.2" fill="none" stroke-dasharray="66 22" stroke-linecap="round" transform="rotate(-100 18 18)"/>
+      <circle cx="18" cy="18" r="7.5" stroke="#FACC15" stroke-width="1" fill="none" opacity=".2"/>
+      <circle cx="18" cy="6.5" r="2.5" fill="#FACC15"/>
+      <text x="18" y="22.5" text-anchor="middle" fill="#FACC15" font-family="system-ui,sans-serif" font-weight="900" font-size="9.5" letter-spacing="-.3">CF</text>
+    </svg>
+    <span class="nav-wm">Cal <span>Friendly</span></span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#features">Features</a></li>
+    <li><a href="#how">How It Works</a></li>
+    <li><a href="#pricing">Pricing</a></li>
+    <li><a href="https://calfriendly.github.io/legal/privacy-policy.html" target="_blank">Privacy</a></li>
+  </ul>
+  <a href="#pricing" class="nav-cta mag">Start Free Trial</a>
+</nav>
+
+<!-- STICKY DOWNLOAD BAR -->
+<div id="sticky-bar" role="complementary" aria-label="Download prompt">
+  <span class="sticky-text"><strong>Cal Friendly</strong> · Free 3-day trial</span>
+  <a href="#pricing" class="sticky-btn mag">Download Free</a>
+  <button class="sticky-close" id="sticky-close" aria-label="Dismiss">×</button>
+</div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-mesh" aria-hidden="true"></div>
+  <div class="hero-content">
+    <div class="hero-badge"><div class="hero-badge-dot"></div>Now Available · iOS &amp; Android</div>
+    <h1 id="hero-h1">
+      <span class="word-wrap"><span class="word-inner">Track Food.</span></span>
+      <br>
+      <span class="word-wrap" style="--d:.1s"><span class="word-inner" style="transition-delay:.1s"><em>Flag What's Bad.</em></span></span>
+      <br>
+      <span class="word-wrap" style="--d:.2s"><span class="word-inner" style="transition-delay:.2s">Know What</span></span>
+      <br>
+      <span class="word-wrap" style="--d:.3s"><span class="word-inner" style="transition-delay:.3s">You're Eating.</span></span>
+    </h1>
+    <p class="hero-sub">The only food tracker that alerts you to high sugar, hidden seed oils, and missing supplements — all in one place.</p>
+    <div class="hero-ctas">
+      <a href="#" class="btn-store mag">
+        <span class="btn-store-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+        </span>
+        <span class="btn-store-text"><small>Download on the</small>App Store</span>
+      </a>
+      <a href="#" class="btn-store mag">
+        <span class="btn-store-icon">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M3 20.5v-17c0-.83.94-1.3 1.6-.8l14 8.5c.6.37.6 1.23 0 1.6l-14 8.5c-.66.5-1.6.03-1.6-.8z"/></svg>
+        </span>
+        <span class="btn-store-text"><small>Get it on</small>Google Play</span>
+      </a>
+    </div>
+  </div>
+
+  <div class="hero-visual" id="heroVisual">
+    <!-- Decorative env rings -->
+    <div class="phone-env" aria-hidden="true">
+      <div class="phone-env-ring"></div>
+      <div class="phone-env-ring"></div>
+      <div class="phone-env-ring"></div>
+      <div class="phone-env-dot"></div>
+      <div class="phone-env-dot"></div>
+      <div class="phone-env-dot"></div>
+    </div>
+
+    <!-- Floating chip: Sugar alert -->
+    <div class="hero-chip chip-top" id="chipTop">
+      <div class="chip-alert-t">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Sugar spike detected
+      </div>
+      <div class="chip-alert-b">28g sugar · above daily limit</div>
+    </div>
+
+    <!-- Floating chip: Protein stat -->
+    <div class="hero-chip chip-btm" id="chipBtm">
+      <div class="chip-stat">
+        <div class="chip-stat-icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+        </div>
+        <div>
+          <div class="chip-stat-val">82g</div>
+          <div class="chip-stat-lbl">Protein today</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="phone-scene">
+      <div class="phone-3d" id="phone3d">
+        <div class="phone-float">
+          <div class="phone-glow"></div>
+          <div class="phone-frame" id="phoneFrame">
+            <div class="phone-island"></div>
+            <div class="phone-inner" id="phoneInner"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="phone-nav" id="phoneDots">
+      <button class="ph-nav-btn active" data-idx="0">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        Dashboard
+      </button>
+      <button class="ph-nav-btn" data-idx="1">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        AI Scanner
+      </button>
+      <button class="ph-nav-btn" data-idx="2">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 12l2 2 4-4"/><path d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9 9 4.03 9 9z"/></svg>
+        Results
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- STATS TICKER -->
+<div class="ticker" aria-hidden="true">
+  <div class="ticker-track" id="tickerTrack">
+    <span class="tick-item"><strong>400,000+</strong> foods in database</span><span class="tick-sep">·</span>
+    <span class="tick-item"><strong>0%</strong> health data sold</span><span class="tick-sep">·</span>
+    <span class="tick-item"><strong>3-day</strong> free trial</span><span class="tick-sep">·</span>
+    <span class="tick-item"><strong>$6.99</strong> per month</span><span class="tick-sep">·</span>
+    <span class="tick-item"><strong>5 macros</strong> tracked per meal</span><span class="tick-sep">·</span>
+    <span class="tick-item">Flags <strong>seed oils, HFCS, dyes</strong></span><span class="tick-sep">·</span>
+    <span class="tick-item"><strong>USDA</strong> verified data</span><span class="tick-sep">·</span>
+    <span class="tick-item">Local-first <strong>privacy</strong></span><span class="tick-sep">·</span>
+    <!-- duplicate for seamless loop -->
+    <span class="tick-item"><strong>400,000+</strong> foods in database</span><span class="tick-sep">·</span>
+    <span class="tick-item"><strong>0%</strong> health data sold</span><span class="tick-sep">·</span>
+    <span class="tick-item"><strong>3-day</strong> free trial</span><span class="tick-sep">·</span>
+    <span class="tick-item"><strong>$6.99</strong> per month</span><span class="tick-sep">·</span>
+    <span class="tick-item"><strong>5 macros</strong> tracked per meal</span><span class="tick-sep">·</span>
+    <span class="tick-item">Flags <strong>seed oils, HFCS, dyes</strong></span><span class="tick-sep">·</span>
+    <span class="tick-item"><strong>USDA</strong> verified data</span><span class="tick-sep">·</span>
+    <span class="tick-item">Local-first <strong>privacy</strong></span><span class="tick-sep">·</span>
+  </div>
+</div>
+
+<div class="ydiv"></div>
+
+<!-- FEATURES -->
+<section id="features">
+  <div class="si">
+    <div class="reveal">
+      <div class="stag">What makes us different</div>
+      <h2>Built for people who track<br>because it <em style="color:var(--accent);font-style:normal">matters</em></h2>
+      <p class="ssub">Most apps count calories. Cal Friendly tells you what's actually in them.</p>
+    </div>
+
+    <div class="feat-bento">
+      <!-- f1: large, col 1 -->
+      <div class="feat-card fb reveal" style="transition-delay:.06s">
+        <div class="feat-card-shine"></div>
+        <div class="feat-icon-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2c0 0-5 7-5 11a5 5 0 0010 0c0-4-5-11-5-11z"/><path d="M9 13h6"/><path d="M12 10v3"/></svg>
+        </div>
+        <div class="feat-title">Diabetic Sugar Alerts</div>
+        <div class="feat-desc">Every meal flagged against blood sugar thresholds. See the risk before it hits your body — not after.</div>
+        <span class="feat-large-num" style="margin-top:28px">25g</span>
+        <div style="font-size:11px;color:var(--text-ter);letter-spacing:.5px">DAILY SUGAR THRESHOLD</div>
+      </div>
+
+      <!-- f2: tall, col 2, spans 2 rows -->
+      <div class="feat-card fb fb-tall reveal" style="transition-delay:.12s">
+        <div class="feat-card-shine"></div>
+        <div class="feat-icon-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </div>
+        <div class="feat-title">Bad Ingredient Detection</div>
+        <div class="feat-desc">Seed oils, HFCS, artificial dyes — flagged at the point of logging. No lectures. Just the information you need to decide.</div>
+        <div style="margin-top:28px;display:flex;flex-direction:column;gap:8px">
+          <div style="background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.18);border-radius:9px;padding:8px 10px;font-size:11px;color:#EF4444;font-weight:600">Canola oil detected</div>
+          <div style="background:rgba(239,68,68,.07);border:1px solid rgba(239,68,68,.18);border-radius:9px;padding:8px 10px;font-size:11px;color:#EF4444;font-weight:600">Soybean oil detected</div>
+          <div style="background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.15);border-radius:9px;padding:8px 10px;font-size:11px;color:#F59E0B;font-weight:600">High-fructose corn syrup</div>
+        </div>
+      </div>
+
+      <!-- f3: col 1 -->
+      <div class="feat-card fb reveal" style="transition-delay:.18s">
+        <div class="feat-card-shine"></div>
+        <div class="feat-icon-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="10" width="18" height="5" rx="2.5"/><path d="M12 10V15"/><circle cx="7.5" cy="12.5" r="1.2" fill="currentColor" stroke="none"/></svg>
+        </div>
+        <div class="feat-title">Supplement Tracker</div>
+        <div class="feat-desc">Creatine, protein, multivitamin. Log what you take alongside what you eat. Doses remembered automatically.</div>
+      </div>
+
+      <!-- f4: wide, spans both columns -->
+      <div class="feat-card fb fb-wide reveal" style="transition-delay:.24s;display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:center">
+        <div>
+          <div class="feat-card-shine"></div>
+          <div class="feat-icon-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/><circle cx="12" cy="13" r="1.5" fill="currentColor" stroke="none"/></svg>
+          </div>
+          <div class="feat-title">AI Food Scanner</div>
+          <div class="feat-desc">Photograph your meal. Get instant calorie and macro estimates. Fast, accurate enough to be genuinely useful, honest about its limits.</div>
+        </div>
+        <div style="background:var(--elevated);border-radius:12px;padding:16px;border:1px solid var(--border-hi)">
+          <div style="font-size:10px;color:var(--text-ter);margin-bottom:10px;letter-spacing:.5px;text-transform:uppercase">Scan result</div>
+          <div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;font-weight:700;color:var(--text);margin-bottom:4px">Greek Yogurt Parfait</div>
+          <div style="font-size:11px;color:var(--text-sec);margin-bottom:12px">1 serving · AI estimate</div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px">
+            <div style="text-align:center"><div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:700;color:var(--text)">280</div><div style="font-size:8px;color:var(--text-ter);margin-top:2px">CAL</div></div>
+            <div style="text-align:center"><div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:700;color:#3B82F6">12g</div><div style="font-size:8px;color:var(--text-ter);margin-top:2px">PRO</div></div>
+            <div style="text-align:center"><div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:700;color:#A855F7">34g</div><div style="font-size:8px;color:var(--text-ter);margin-top:2px">CARB</div></div>
+            <div style="text-align:center"><div style="font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:700;color:#F97316">8g</div><div style="font-size:8px;color:var(--text-ter);margin-top:2px">FAT</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- f5: col 1 -->
+      <div class="feat-card fb reveal" style="transition-delay:.3s">
+        <div class="feat-card-shine"></div>
+        <div class="feat-icon-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+        </div>
+        <div class="feat-title">400K+ Food Database</div>
+        <div class="feat-desc">USDA FoodData Central — one of the most accurate food databases available. Barcode scanning via Open Food Facts.</div>
+      </div>
+
+      <!-- f6: col 2 -->
+      <div class="feat-card fb reveal" style="transition-delay:.36s">
+        <div class="feat-card-shine"></div>
+        <div class="feat-icon-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+        </div>
+        <div class="feat-title">Privacy First</div>
+        <div class="feat-desc">All health data stored locally on your device. Zero servers. Zero health data uploads. Zero advertising profiles.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="ydiv"></div>
+
+<!-- SCREENSHOTS CAROUSEL -->
+<section class="shots-wrap" id="screenshots">
+  <div class="si" style="padding-bottom:0">
+    <div class="reveal" style="text-align:center">
+      <div class="stag" style="text-align:center">See It In Action</div>
+      <h2 style="text-align:center">Every screen built for<br><em style="color:var(--accent);font-style:normal">speed &amp; clarity</em></h2>
+      <p class="ssub" style="text-align:center;margin:0 auto">Scan in seconds. Get flagged immediately. Log and move on.</p>
+    </div>
+  </div>
+  <div class="carousel-outer" id="carouselOuter">
+    <div class="carousel-track" id="carouselTrack">
+
+      <div class="shot-item reveal" style="transition-delay:.06s">
+        <div class="shot-phone-mini">
+          <div class="spm-island"></div>
+          <div class="sps-scanner">
+            <div class="sps-sh">
+              <div class="sps-sh-title">
+                <svg class="sps-sh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                AI Scanner
+              </div>
+            </div>
+            <div class="sps-vf">
+              <div class="sps-vf-grid"></div>
+              <div class="sps-corner tl"></div><div class="sps-corner tr"></div>
+              <div class="sps-corner bl"></div><div class="sps-corner br"></div>
+              <div class="sps-beam"></div>
+              <div class="sps-pulse"></div>
+              <div class="sps-vf-lbl">Analyzing meal...</div>
+            </div>
+            <div class="sps-bottom">
+              <div class="sps-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M6.343 6.343A8 8 0 1017.657 17.657 8 8 0 006.343 6.343z"/></svg>
+              </div>
+              <div class="sps-hint">Point at your meal</div>
+            </div>
+          </div>
+        </div>
+        <div class="shot-label"><strong>Scan Any Meal</strong><span>AI identifies food instantly</span></div>
+      </div>
+
+      <div class="shot-item reveal" style="transition-delay:.14s">
+        <div class="shot-phone-mini">
+          <div class="spm-island"></div>
+          <div class="sps-result">
+            <div class="spr-hdr"><div class="spr-title">Scan Result</div><div class="spr-back">Rescan</div></div>
+            <div class="spr-food"><div class="spr-fname">BBQ Chicken Pizza</div><div class="spr-cal">1 slice (107g) · AI estimate</div></div>
+            <div class="spr-macros">
+              <div class="spr-m"><div class="spr-mv">520</div><div class="spr-mk">Cal</div></div>
+              <div class="spr-m"><div class="spr-mv">28g</div><div class="spr-mk">Pro</div></div>
+              <div class="spr-m"><div class="spr-mv">52g</div><div class="spr-mk">Carb</div></div>
+              <div class="spr-m"><div class="spr-mv">20g</div><div class="spr-mk">Fat</div></div>
+            </div>
+            <div class="spr-alert">
+              <div class="spr-alert-t">
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+                High Sugar Warning
+              </div>
+              <div class="spr-alert-b">14g sugar · above daily limit. Blood sugar spike risk.</div>
+            </div>
+            <div class="spr-warn">
+              <div class="spr-warn-t">
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                Seed Oil Detected
+              </div>
+              <div class="spr-warn-b">Soybean oil found in ingredients.</div>
+            </div>
+            <div class="spr-addbtn">Add to Today's Log</div>
+          </div>
+        </div>
+        <div class="shot-label"><strong>Instant Alerts</strong><span>Sugar spikes &amp; bad ingredients flagged</span></div>
+      </div>
+
+      <div class="shot-item reveal" style="transition-delay:.22s">
+        <div class="shot-phone-mini">
+          <div class="spm-island"></div>
+          <div class="sps-supp">
+            <div class="spsu-hdr">
+              <div class="spsu-htitle">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color:var(--accent)"><rect x="3" y="10" width="18" height="5" rx="2.5"/><path d="M12 10V15"/><circle cx="7.5" cy="12.5" r="1.2" fill="currentColor" stroke="none"/></svg>
+                Supplements
+              </div>
+              <div class="spsu-sub">Thursday · May 15</div>
+            </div>
+            <div class="spsu-prog">
+              <div class="spsu-prog-t">Today's progress</div>
+              <div class="spsu-bar-bg"><div class="spsu-bar-fill"></div></div>
+              <div class="spsu-prog-lbl">2 of 3 logged</div>
+            </div>
+            <div class="spsu-item">
+              <div class="spsu-item-l"><div class="spsu-item-name">Creatine</div><div class="spsu-item-dose">5g · logged 8:12am</div></div>
+              <div class="spsu-check"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.5 6l2.5 2.5 4.5-4.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            </div>
+            <div class="spsu-item">
+              <div class="spsu-item-l"><div class="spsu-item-name">Protein Shake</div><div class="spsu-item-dose">30g protein · logged 9:04am</div></div>
+              <div class="spsu-check"><svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.5 6l2.5 2.5 4.5-4.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+            </div>
+            <div class="spsu-item" style="opacity:.5">
+              <div class="spsu-item-l"><div class="spsu-item-name">Multivitamin</div><div class="spsu-item-dose">1 tablet · not yet logged</div></div>
+              <div class="spsu-pending"></div>
+            </div>
+            <div class="spsu-add">Log Multivitamin</div>
+          </div>
+        </div>
+        <div class="shot-label"><strong>Supplement Tracker</strong><span>Never forget what you've taken</span></div>
+      </div>
+
+    </div>
+  </div>
+  <div style="height:80px"></div>
+</section>
+
+<div class="ydiv"></div>
+
+<!-- HOW IT WORKS -->
+<section id="how" class="how-wrap">
+  <div class="si">
+    <div class="reveal" style="margin-bottom:60px">
+      <div class="stag">Simple by design</div>
+      <h2>Three steps to eating<br>with <em style="color:var(--accent);font-style:normal">clarity</em></h2>
+    </div>
+    <div class="timeline">
+      <div class="tl-item reveal" style="transition-delay:.08s">
+        <div class="tl-left"><div class="tl-num">01</div><div class="tl-line"></div></div>
+        <div class="tl-content">
+          <div class="tl-title">Scan or Search your food</div>
+          <div class="tl-desc">Photograph your meal or type any food name. The AI scanner and 400K+ USDA database identify it in seconds. Barcode scanning included for packaged goods.</div>
+        </div>
+      </div>
+      <div class="tl-item reveal" style="transition-delay:.18s">
+        <div class="tl-left"><div class="tl-num">02</div><div class="tl-line"></div></div>
+        <div class="tl-content">
+          <div class="tl-title">Get instant alerts for what matters</div>
+          <div class="tl-desc">High sugar? Seed oils? Hidden dyes? Cal Friendly flags what actually matters before you commit to the meal. No noise, no lectures — just the information.</div>
+        </div>
+      </div>
+      <div class="tl-item reveal" style="transition-delay:.28s">
+        <div class="tl-left"><div class="tl-num">03</div><div class="tl-line"></div></div>
+        <div class="tl-content">
+          <div class="tl-title">Track macros, supplements, and trends</div>
+          <div class="tl-desc">Calories, protein, carbs, fat, sugar, and sodium tracked daily. Monthly sugar trends in your profile so you can spot patterns over time — not just today.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="ydiv"></div>
+
+<!-- COMPARISON -->
+<section id="compare">
+  <div class="si">
+    <div class="reveal">
+      <div class="stag">Why Cal Friendly</div>
+      <h2>More than a<br>calorie <em style="color:var(--accent);font-style:normal">counter</em></h2>
+      <p class="ssub">The features that actually change how you eat.</p>
+    </div>
+    <div class="reveal" style="overflow-x:auto;transition-delay:.16s">
+      <table class="compare-tbl">
+        <thead>
+          <tr>
+            <th style="width:44%">Feature</th>
+            <th>Other Apps</th>
+            <th class="cf">Cal Friendly</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="feat">Diabetic sugar alerts</td><td class="oth"><span class="cx">&#x2715;</span></td><td class="cf"><span class="cky">&#x2713;</span></td></tr>
+          <tr><td class="feat">Bad ingredient detection</td><td class="oth"><span class="cx">&#x2715;</span></td><td class="cf"><span class="cky">&#x2713;</span></td></tr>
+          <tr><td class="feat">Supplement tracker</td><td class="oth"><span class="cx">&#x2715;</span></td><td class="cf"><span class="cky">&#x2713;</span></td></tr>
+          <tr><td class="feat">AI food scanner</td><td class="oth"><span class="ck">&#x2713;</span></td><td class="cf"><span class="cky">&#x2713;</span></td></tr>
+          <tr><td class="feat">Privacy-first local storage</td><td class="oth"><span class="cx">&#x2715;</span></td><td class="cf"><span class="cky">&#x2713;</span></td></tr>
+          <tr><td class="feat">Monthly price</td><td class="oth" style="font-size:13px;color:var(--text-sec)">$19.99+/month</td><td class="cf">$6.99/month</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<div class="ydiv"></div>
+
+<!-- PRICING -->
+<section id="pricing" class="price-wrap">
+  <div class="si">
+    <div class="reveal" style="text-align:center;margin-bottom:60px">
+      <div class="stag" style="text-align:center">Pricing</div>
+      <h2 style="text-align:center">Simple, <em style="color:var(--accent);font-style:normal">honest</em> pricing</h2>
+      <p class="ssub" style="margin:0 auto;text-align:center">Start free. No card required to try. Cancel any time.</p>
+    </div>
+    <div class="price-grid">
+      <div class="price-card reveal" style="transition-delay:.08s">
+        <div class="price-lbl">Monthly</div>
+        <div class="price-amt"><sup>$</sup>6.99</div>
+        <div class="price-per">per month</div>
+        <ul class="price-feats" style="margin-top:20px">
+          <li>3-day free trial</li>
+          <li>All features included</li>
+          <li>AI food scanner</li>
+          <li>Sugar &amp; ingredient alerts</li>
+          <li>Supplement tracker</li>
+          <li>Cancel anytime</li>
+        </ul>
+        <button class="price-btn secondary mag">Start Free Trial</button>
+        <div class="price-fine">No payment required to start</div>
+      </div>
+
+      <div class="price-card feat reveal" style="transition-delay:.18s">
+        <div class="price-badge">Most Popular</div>
+        <div class="price-lbl">Annual</div>
+        <div class="price-amt"><sup>$</sup>39.99</div>
+        <div class="price-per">per year</div>
+        <div class="price-save">Save 52% — $3.33/month</div>
+        <ul class="price-feats">
+          <li>3-day free trial</li>
+          <li>Everything in Monthly</li>
+          <li>Save $43.89 vs monthly</li>
+          <li>Best value — full year</li>
+          <li>Cancel anytime</li>
+        </ul>
+        <button class="price-btn primary mag">Start Free Trial</button>
+        <div class="price-fine">No payment required to start</div>
+      </div>
+    </div>
+
+    <div class="reveal" style="transition-delay:.3s;margin-top:40px;padding:24px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);font-size:11px;color:var(--text-ter);line-height:1.75;max-width:700px;margin-left:auto;margin-right:auto">
+      Payment will be charged to your Apple ID account at the confirmation of purchase. Subscription automatically renews unless canceled at least 24 hours before the end of the current period. Your account will be charged for renewal within 24 hours prior to the end of the current period at the applicable rate. You can manage and cancel your subscriptions in your Account Settings on the App Store. Any unused portion of a free trial will be forfeited when a subscription is purchased.
+    </div>
+  </div>
+</section>
+
+<div class="ydiv"></div>
+
+<!-- BOTTOM CTA -->
+<section class="bottom-cta">
+  <div class="cta-inner reveal">
+    <div class="stag" style="text-align:center">Ready to start?</div>
+    <h2>Stop guessing what's<br><em style="color:var(--accent);font-style:normal">in your food</em></h2>
+    <p class="ssub" style="text-align:center;margin:0 auto 42px">3-day free trial. No credit card required. $3.33/month on the annual plan — less than a coffee. Available on iOS and Android.</p>
+    <div class="cta-btns">
+      <a href="#" class="cta-primary mag">Download Free</a>
+      <a href="#features" class="cta-sec">See All Features</a>
+    </div>
+  </div>
+</section>
+
+<div class="ydiv"></div>
+
+<!-- TRUST SIGNALS -->
+<section id="reviews">
+  <div class="si">
+    <div class="reveal" style="text-align:center;margin-bottom:52px">
+      <div class="stag" style="text-align:center">Built different</div>
+      <h2 style="text-align:center">Designed for people who<br><em style="color:var(--accent);font-style:normal">actually need it</em></h2>
+      <p class="ssub" style="margin:0 auto;text-align:center">Most trackers are built for fitness influencers. Cal Friendly is built for people managing real health conditions on a real budget.</p>
+    </div>
+    <div class="test-grid">
+      <div class="trust-card reveal" style="transition-delay:.06s">
+        <div class="trust-card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2c0 0-5 7-5 11a5 5 0 0010 0c0-4-5-11-5-11z"/><path d="M9 13h6"/><path d="M12 10v3"/></svg>
+        </div>
+        <div class="trust-card-head">Built for diabetics — and everyone who cares about sugar</div>
+        <div class="trust-card-body">Real-time blood sugar spike alerts at every meal. Every scan flags sugar content against your daily threshold before you eat — not after.</div>
+        <div class="trust-card-stat" data-count="25" data-suffix="g threshold">25g threshold</div>
+      </div>
+      <div class="trust-card reveal" style="transition-delay:.12s">
+        <div class="trust-card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+        </div>
+        <div class="trust-card-head">Zero health data ever leaves your device</div>
+        <div class="trust-card-body">All your food logs, macro history, and supplement records are stored locally. No cloud accounts, no health data servers, no advertising profiles. Period.</div>
+        <div class="trust-card-stat">0% uploaded</div>
+      </div>
+      <div class="trust-card reveal" style="transition-delay:.18s">
+        <div class="trust-card-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+        </div>
+        <div class="trust-card-head">Less than a coffee per month</div>
+        <div class="trust-card-body">Full access to every feature for $3.33/month on the annual plan. AI scanning, ingredient alerts, supplement tracker — no paywalls on individual features.</div>
+        <div class="trust-card-stat" data-prefix="$" data-count="3.33" data-suffix="/month">$3.33/month</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="fi">
+    <div class="ft">
+      <div>
+        <a href="#" class="nav-logo" style="margin-bottom:10px;display:inline-flex">
+          <svg width="34" height="34" viewBox="0 0 36 36" fill="none">
+            <circle cx="18" cy="18" r="14" stroke="#FACC15" stroke-width="2.2" fill="none" stroke-dasharray="66 22" stroke-linecap="round" transform="rotate(-100 18 18)"/>
+            <circle cx="18" cy="18" r="7.5" stroke="#FACC15" stroke-width="1" fill="none" opacity=".2"/>
+            <circle cx="18" cy="6.5" r="2.5" fill="#FACC15"/>
+            <text x="18" y="22.5" text-anchor="middle" fill="#FACC15" font-family="system-ui,sans-serif" font-weight="900" font-size="9.5" letter-spacing="-.3">CF</text>
+          </svg>
+          <span class="nav-wm" style="font-size:16px">Cal <span>Friendly</span></span>
+        </a>
+        <div class="fb-tag">Track smarter. Eat cleaner.</div>
+      </div>
+      <div class="fcol">
+        <h4>Product</h4>
+        <a href="#features">Features</a>
+        <a href="#how">How It Works</a>
+        <a href="#pricing">Pricing</a>
+        <a href="#reviews">Why Us</a>
+      </div>
+      <div class="fcol">
+        <h4>Legal</h4>
+        <a href="https://calfriendly.github.io/legal/privacy-policy.html" target="_blank">Privacy Policy</a>
+        <a href="https://calfriendly.github.io/legal/terms.html" target="_blank">Terms of Service</a>
+      </div>
+      <div class="fcol">
+        <h4>Support</h4>
+        <a href="mailto:calfriendly.app@hotmail.com">calfriendly.app@hotmail.com</a>
+        <a href="#pricing">Start Free Trial</a>
+      </div>
+    </div>
+    <div class="legal-disc">Cal Friendly is a food tracking tool provided for informational and self-monitoring purposes only. It is not a medical device and does not provide medical advice. Always consult a qualified healthcare professional for dietary guidance, particularly if you have diabetes, hypertension, or another health condition.</div>
+    <div class="fb">
+      <div>&#169; 2026 CalFriendly LLC. All rights reserved.</div>
+      <div>Not a medical device.</div>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* ── SCROLL PROGRESS ── */
+const prog = document.getElementById('scroll-prog');
+window.addEventListener('scroll', () => {
+  const pct = window.scrollY / (document.body.scrollHeight - window.innerHeight) * 100;
+  prog.style.width = pct + '%';
+}, { passive: true });
+
+/* ── PARTICLES ── */
+(function() {
+  const c = document.getElementById('particles');
+  const ctx = c.getContext('2d');
+  let W, H, pts = [];
+  function resize() {
+    W = c.width = window.innerWidth;
+    H = c.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+  for (let i = 0; i < 80; i++) pts.push({
+    x: Math.random() * 9999,
+    y: Math.random() * 9999,
+    vx: (Math.random() - .5) * .18,
+    vy: (Math.random() - .5) * .18,
+    r: Math.random() * 1.4 + .3,
+    a: Math.random() * .35 + .05
+  });
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    pts.forEach(p => {
+      p.x += p.vx; p.y += p.vy;
+      if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
+      if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
+      ctx.beginPath();
+      ctx.arc(p.x % W, p.y % H, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(250,204,21,${p.a})`;
+      ctx.fill();
+    });
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+/* ── HERO H1 SPLIT TEXT REVEAL ── */
+(function() {
+  const h1 = document.getElementById('hero-h1');
+  const vis = document.getElementById('heroVisual');
+  const ct = document.getElementById('chipTop');
+  const cb = document.getElementById('chipBtm');
+  setTimeout(() => {
+    h1.classList.add('revealed');
+    vis.classList.add('visible');
+    setTimeout(() => { ct.classList.add('visible'); cb.classList.add('visible'); }, 600);
+  }, 200);
+})();
+
+/* ── PHONE 3D PARALLAX (mouse + touch) ── */
+(function() {
+  const scene = document.getElementById('phone3d');
+  const frame = document.querySelector('.phone-frame');
+  const heroEl = document.querySelector('.hero');
+  if (!scene || !heroEl) return;
+  let cx = 0, cy = 0, tx = 0, ty = 0;
+  function lerp(a, b, n) { return a + (b - a) * n; }
+  function update() {
+    cx = lerp(cx, tx, 0.07);
+    cy = lerp(cy, ty, 0.07);
+    scene.style.transform = `perspective(900px) rotateX(${cy}deg) rotateY(${cx}deg)`;
+    // Dynamic rim lighting — shadow shifts opposite to tilt
+    if (frame) {
+      const sx = -cx * 1.4, sy = -cy * 1.2;
+      frame.style.boxShadow = `
+        inset 0 0 0 1px rgba(255,255,255,.05),
+        inset 0 1px 0 rgba(255,255,255,.12),
+        0 0 0 1px rgba(0,0,0,.9),
+        ${sx}px ${sy + 60}px 120px rgba(0,0,0,.85),
+        0 20px 60px rgba(0,0,0,.5),
+        ${-sx * 0.3}px ${-sy * 0.3}px 60px rgba(250,204,21,${0.04 + Math.abs(cx) * 0.006})
+      `;
+    }
+    requestAnimationFrame(update);
+  }
+  update();
+  document.addEventListener('mousemove', e => {
+    const rect = heroEl.getBoundingClientRect();
+    const px = (e.clientX - rect.left) / rect.width - .5;
+    const py = (e.clientY - rect.top) / rect.height - .5;
+    tx = px * 24;
+    ty = -py * 18;
+  });
+  heroEl.addEventListener('mouseleave', () => { tx = 0; ty = 0; });
+  document.addEventListener('touchmove', e => {
+    const t = e.touches[0];
+    const rect = heroEl.getBoundingClientRect();
+    tx = ((t.clientX - rect.left) / rect.width - .5) * 16;
+    ty = -((t.clientY - rect.top) / rect.height - .5) * 12;
+  }, { passive: true });
+  document.addEventListener('touchend', () => { tx = 0; ty = 0; });
+})();
+
+/* ── PHONE SCREEN CYCLING ── */
+(function() {
+  const frame = document.getElementById('phoneFrame');
+  const inner = document.getElementById('phoneInner');
+  const navBtns = document.querySelectorAll('.ph-nav-btn');
+  if (!frame || !inner) return;
+  let current = 0, locked = false;
+
+  const s0 = `<div class="phone-screen">
+    <div class="ps-hdr"><div><div class="ps-greet">Good morning</div><div class="ps-name">Cal Friendly</div></div><div class="ps-date">Thu<br>May 15</div></div>
+    <div class="ps-ring-wrap"><svg class="ps-ring-svg" viewBox="0 0 128 128"><circle class="ring-bg" cx="64" cy="64" r="52"/><circle class="ring-fill" cx="64" cy="64" r="52"/><text class="ring-ct" x="64" y="61" text-anchor="middle">1,847</text><text class="ring-cs" x="64" y="74" text-anchor="middle">of 2,200 cal</text></svg></div>
+    <div class="ps-macros">
+      <div class="ps-macro"><svg width="44" height="44" viewBox="0 0 44 44"><circle cx="22" cy="22" r="17" fill="none" stroke="#1A1816" stroke-width="5"/><circle cx="22" cy="22" r="17" fill="none" stroke="#3B82F6" stroke-width="5" stroke-linecap="round" stroke-dasharray="107" stroke-dashoffset="32" transform="rotate(-90 22 22)"/><text x="22" y="26" text-anchor="middle" fill="#F2EFE8" font-size="9" font-weight="700" font-family="Plus Jakarta Sans,sans-serif">82g</text></svg><span class="ml">Protein</span></div>
+      <div class="ps-macro"><svg width="44" height="44" viewBox="0 0 44 44"><circle cx="22" cy="22" r="17" fill="none" stroke="#1A1816" stroke-width="5"/><circle cx="22" cy="22" r="17" fill="none" stroke="#A855F7" stroke-width="5" stroke-linecap="round" stroke-dasharray="107" stroke-dashoffset="50" transform="rotate(-90 22 22)"/><text x="22" y="26" text-anchor="middle" fill="#F2EFE8" font-size="9" font-weight="700" font-family="Plus Jakarta Sans,sans-serif">164g</text></svg><span class="ml">Carbs</span></div>
+      <div class="ps-macro"><svg width="44" height="44" viewBox="0 0 44 44"><circle cx="22" cy="22" r="17" fill="none" stroke="#1A1816" stroke-width="5"/><circle cx="22" cy="22" r="17" fill="none" stroke="#F97316" stroke-width="5" stroke-linecap="round" stroke-dasharray="107" stroke-dashoffset="60" transform="rotate(-90 22 22)"/><text x="22" y="26" text-anchor="middle" fill="#F2EFE8" font-size="9" font-weight="700" font-family="Plus Jakarta Sans,sans-serif">48g</text></svg><span class="ml">Fat</span></div>
+      <div class="ps-macro"><svg width="44" height="44" viewBox="0 0 44 44"><circle cx="22" cy="22" r="17" fill="none" stroke="#1A1816" stroke-width="5"/><circle cx="22" cy="22" r="17" fill="none" stroke="#EF4444" stroke-width="5" stroke-linecap="round" stroke-dasharray="107" stroke-dashoffset="75" transform="rotate(-90 22 22)"/><text x="22" y="26" text-anchor="middle" fill="#F2EFE8" font-size="9" font-weight="700" font-family="Plus Jakarta Sans,sans-serif">22g</text></svg><span class="ml">Sugar</span></div>
+    </div>
+    <div class="ps-alert"><div class="ps-alert-t">High Sugar Warning</div><div class="ps-alert-b">Lunch · 28g sugar — above 25g daily limit.</div></div>
+    <div class="ps-supps"><div class="ps-supps-t">Supplements</div><div class="ps-supp-row"><div class="ps-supp-dot"></div>Creatine 5g</div><div class="ps-supp-row"><div class="ps-supp-dot"></div>Protein Shake 30g</div><div class="ps-supp-row" style="opacity:.4"><div class="ps-supp-dot" style="background:#333"></div>Multivitamin</div></div>
+  </div>`;
+
+  const s1 = `<div class="ps-scanner">
+    <div class="ps-scan-hdr"><div class="ps-scan-label">AI Scanner</div></div>
+    <div class="ps-scan-view">
+      <div class="ps-scan-corner tl"></div><div class="ps-scan-corner tr"></div>
+      <div class="ps-scan-corner bl"></div><div class="ps-scan-corner br"></div>
+      <div class="ps-scan-beam"></div>
+      <div class="ps-scan-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="rgba(250,204,21,0.9)" stroke-width="1.5"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg></div>
+    </div>
+    <div class="ps-scan-footer"><div class="ps-scanning-text">ANALYZING MEAL...</div><div class="ps-scan-dots"><span></span><span></span><span></span></div></div>
+  </div>`;
+
+  const s2 = `<div>
+    <div class="ps-result-hdr"><div class="ps-result-label">Scan Result</div><div class="ps-result-rescan">Rescan</div></div>
+    <div class="ps-result-food">BBQ Chicken Pizza</div>
+    <div class="ps-result-sub">1 slice (107g) · AI estimate</div>
+    <div class="ps-result-macros">
+      <div class="ps-mac-pill"><div class="ps-mac-v">520</div><div class="ps-mac-l">cal</div></div>
+      <div class="ps-mac-pill"><div class="ps-mac-v" style="color:#EF4444">28g</div><div class="ps-mac-l">sugar</div></div>
+      <div class="ps-mac-pill"><div class="ps-mac-v">52g</div><div class="ps-mac-l">carbs</div></div>
+      <div class="ps-mac-pill"><div class="ps-mac-v">20g</div><div class="ps-mac-l">fat</div></div>
+    </div>
+    <div class="ps-warn-card danger"><div class="ps-warn-t"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>High Sugar Warning</div><div class="ps-warn-b">28g sugar · above 25g limit. Blood sugar spike risk.</div></div>
+    <div class="ps-warn-card caution"><div class="ps-warn-t"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Seed Oil Detected</div><div class="ps-warn-b">Soybean oil found in ingredients.</div></div>
+    <div class="ps-add-btn">Add to Today's Log</div>
+  </div>`;
+
+  const screens = [s0, s1, s2];
+
+  function updateDots(idx) {
+    navBtns.forEach((b, i) => b.classList.toggle('active', i === idx));
+  }
+
+  function goToScreen(idx) {
+    if (locked) return;
+    locked = true;
+    inner.classList.add('fade-out');
+    setTimeout(() => {
+      current = idx;
+      inner.innerHTML = screens[current];
+      inner.classList.remove('fade-out');
+      inner.classList.add('fade-in-start');
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        inner.classList.remove('fade-in-start');
+        locked = false;
+      }));
+      updateDots(current);
+    }, 240);
+  }
+
+  inner.innerHTML = screens[0];
+  updateDots(0);
+
+  frame.addEventListener('click', () => goToScreen((current + 1) % 3));
+
+  navBtns.forEach((b, i) => b.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (i !== current) goToScreen(i);
+  }));
+})();
+
+/* ── CARD SPOTLIGHT BORDER + TILT ── */
+document.querySelectorAll('.feat-card').forEach(card => {
+  card.addEventListener('mousemove', e => {
+    const rect = card.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    card.style.setProperty('--mx', x + '%');
+    card.style.setProperty('--my', y + '%');
+    // Tilt
+    const rx = ((e.clientY - rect.top) / rect.height - .5) * -10;
+    const ry = ((e.clientX - rect.left) / rect.width - .5) * 10;
+    card.style.transform = `perspective(700px) rotateX(${rx}deg) rotateY(${ry}deg) translateY(-6px)`;
+  });
+  card.addEventListener('mouseleave', () => {
+    card.style.transform = '';
+    card.style.setProperty('--mx', '50%');
+    card.style.setProperty('--my', '50%');
+  });
+});
+
+/* ── MAGNETIC BUTTONS ── */
+document.querySelectorAll('.mag').forEach(el => {
+  el.addEventListener('mousemove', e => {
+    const rect = el.getBoundingClientRect();
+    const dx = e.clientX - (rect.left + rect.width / 2);
+    const dy = e.clientY - (rect.top + rect.height / 2);
+    el.style.transform = `translate(${dx * .3}px, ${dy * .3}px)`;
+  });
+  el.addEventListener('mouseleave', () => {
+    el.style.transform = '';
+  });
+});
+
+/* ── INTERSECTION OBSERVER REVEALS ── */
+const io = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); } });
+}, { threshold: 0.12 });
+document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+
+/* ── COUNT-UP ANIMATION ── */
+(function() {
+  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (prefersReduced) return;
+  const countEls = document.querySelectorAll('[data-count]');
+  const countIo = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      countIo.unobserve(entry.target);
+      const el = entry.target;
+      const target = parseFloat(el.dataset.count);
+      const prefix = el.dataset.prefix || '';
+      const suffix = el.dataset.suffix || '';
+      const isDecimal = target !== Math.floor(target);
+      const duration = 1200;
+      const start = performance.now();
+      function tick(now) {
+        const elapsed = now - start;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        const val = target * eased;
+        el.textContent = prefix + (isDecimal ? val.toFixed(2) : Math.floor(val)) + suffix;
+        if (progress < 1) requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    });
+  }, { threshold: 0.5 });
+  countEls.forEach(el => countIo.observe(el));
+})();
+
+/* ── HORIZONTAL DRAG CAROUSEL ── */
+(function() {
+  const outer = document.getElementById('carouselOuter');
+  const track = document.getElementById('carouselTrack');
+  if (!outer || !track) return;
+  let isDown = false, startX, scrollLeft, velX = 0, lastX, lastT, raf;
+  function lerp(a, b, n) { return a + (b - a) * n; }
+  outer.addEventListener('mousedown', e => {
+    isDown = true;
+    startX = e.pageX - outer.offsetLeft;
+    scrollLeft = track.scrollLeft;
+    lastX = e.pageX; lastT = Date.now();
+    cancelAnimationFrame(raf);
+  });
+  document.addEventListener('mouseup', () => {
+    if (!isDown) return;
+    isDown = false;
+    momentum();
+  });
+  document.addEventListener('mousemove', e => {
+    if (!isDown) return;
+    e.preventDefault();
+    const x = e.pageX - outer.offsetLeft;
+    track.scrollLeft = scrollLeft - (x - startX);
+    velX = (e.pageX - lastX) / Math.max(1, Date.now() - lastT) * 16;
+    lastX = e.pageX; lastT = Date.now();
+  });
+  function momentum() {
+    if (Math.abs(velX) < 0.5) return;
+    track.scrollLeft -= velX;
+    velX *= 0.92;
+    raf = requestAnimationFrame(momentum);
+  }
+  // Touch
+  let touchStartX, touchScroll;
+  track.addEventListener('touchstart', e => {
+    touchStartX = e.touches[0].pageX;
+    touchScroll = track.scrollLeft;
+    cancelAnimationFrame(raf);
+  }, { passive: true });
+  track.addEventListener('touchmove', e => {
+    track.scrollLeft = touchScroll - (e.touches[0].pageX - touchStartX);
+  }, { passive: true });
+})();
+
+/* ── NAV OPACITY ON SCROLL ── */
+const navEl = document.getElementById('nav');
+window.addEventListener('scroll', () => {
+  navEl.style.background = window.scrollY > 60
+    ? 'rgba(16,15,13,0.92)' : 'rgba(16,15,13,0.72)';
+}, { passive: true });
+
+/* ── TEXT SCRAMBLE on section labels ── */
+(function() {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  function scramble(el) {
+    const orig = el.textContent;
+    let f = 0, total = 18;
+    function tick() {
+      el.textContent = orig.split('').map((c, i) => {
+        if (c === ' ') return ' ';
+        if (i < Math.floor((f / total) * orig.length)) return orig[i];
+        return CHARS[Math.floor(Math.random() * CHARS.length)];
+      }).join('');
+      if (++f <= total) requestAnimationFrame(tick);
+      else el.textContent = orig;
+    }
+    requestAnimationFrame(tick);
+  }
+  const stagIo = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (!e.isIntersecting) return;
+      stagIo.unobserve(e.target);
+      setTimeout(() => scramble(e.target), 120);
+    });
+  }, { threshold: 0.8 });
+  document.querySelectorAll('.stag').forEach(el => stagIo.observe(el));
+})();
+
+/* ── STICKY DOWNLOAD BAR ── */
+(function() {
+  const bar = document.getElementById('sticky-bar');
+  const closeBtn = document.getElementById('sticky-close');
+  if (!bar) return;
+  let dismissed = false;
+  const heroH = document.querySelector('.hero')?.offsetHeight || 600;
+  function checkBar() {
+    if (dismissed) return;
+    if (window.scrollY > heroH * 0.7) bar.classList.add('visible');
+    else bar.classList.remove('visible');
+  }
+  window.addEventListener('scroll', checkBar, { passive: true });
+  closeBtn?.addEventListener('click', () => {
+    dismissed = true;
+    bar.classList.remove('visible');
+    setTimeout(() => bar.remove(), 600);
+  });
+})();
+</script>
+</body>
+</html>
